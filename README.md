@@ -2,66 +2,50 @@
 
 A fault-tolerant, highly available, and scalable distributed task scheduling and execution system.
 
-## Project Architecture & Structure
+## Project Structure
 
-```
-distributed-task-scheduler/
-├── README.md
-├── docs/                      # Comprehensive architectural documentation
-│   ├── 01-project-vision.md
-│   ├── 02-requirements.md
-│   ├── 03-distributed-systems-fundamentals.md
-│   ├── 04-high-level-architecture.md
-│   ├── 05-service-architecture.md
-│   ├── 06-infrastructure.md
-│   ├── 07-technology-decisions.md
-│   ├── 08-rest-api.md
-│   ├── 09-grpc.md
-│   ├── 10-internal-communication.md
-│   ├── 11-postgresql.md
-│   ├── 12-redis.md
-│   ├── 13-rabbitmq.md
-│   ├── 14-minio.md
-│   ├── 15-timer-store.md
-│   ├── 16-scanner.md
-│   ├── 17-cron-engine.md
-│   ├── 18-dispatcher.md
-│   ├── 19-worker.md
-│   ├── 20-idempotency.md
-│   ├── 21-retries.md
-│   ├── 22-distributed-coordination.md
-│   ├── 23-scheduling-algorithms.md
-│   ├── 24-fault-tolerance.md
-│   ├── 25-notification-service.md
-│   ├── 26-audit-service.md
-│   ├── 27-logging.md
-│   ├── 28-metrics.md
-│   ├── 29-distributed-tracing.md
-│   ├── 30-security.md
-│   ├── 31-local-development.md
-│   ├── 32-kubernetes.md
-│   ├── 33-cloud-deployment.md
-│   ├── 34-testing.md
-│   └── 35-development-roadmap.md
-│
-├── scheduler-api/             # REST/gRPC API Gateway for task creation & management
-├── timer-service/             # High-precision timer store & trigger service
-├── scanner-service/           # Partitioned database scanner for due tasks
-├── worker-service/            # Scalable task execution worker node service
-├── cron-service/              # Cron expression parser & schedule producer
-├── coordinator-service/       # Leader election, partition management, and cluster state
-├── notification-service/      # Task status webhook and alert notification engine
-├── shared/                    # Shared code, schemas, and helper modules
-│   ├── proto/                 # Protocol buffer definitions for gRPC & IPC
-│   ├── common/                # Core utilities, types, and constants
-│   ├── config/                # Environment and dynamic config handlers
-│   └── logger/                # Structured logging initialization & formatters
-│
-├── docker/                    # Dockerfiles, Compose specs, and dev containers
-├── kubernetes/                # Kubernetes manifests, Helm charts, and Kustomize overlays
-└── scripts/                   # Setup, build, migration, and automation scripts
+```text
+scheduler-platform/
+├── apps/         # Applications (Scheduler, Scanner, Dispatcher, Worker, etc.)
+├── packages/     # Shared packages (database, grpc, rabbitmq, redis, etc.)
+├── proto/        # Protocol buffer definitions
+├── docker/       # Local infrastructure setup (Docker Compose)
+├── kubernetes/   # Kubernetes manifests and Helm charts
+└── docs/         # Architectural documentation
 ```
 
-## Getting Started
+## Infrastructure (Phase 2)
 
-Refer to [01-project-vision.md](docs/01-project-vision.md) and [31-local-development.md](docs/31-local-development.md) for documentation on setup, architecture, and local environment execution.
+Local development infrastructure is managed via Docker Compose.
+
+### Quick Start
+
+```bash
+# Start all local infrastructure services (PostgreSQL, Redis, RabbitMQ, Prometheus, Grafana, Jaeger)
+npm run docker:up
+
+# View container logs
+npm run docker:logs
+
+# Stop infrastructure services
+npm run docker:down
+```
+
+### Infrastructure Services & Endpoints
+
+| Service           | Host Port | Internal Port | Description / UI Link                                                      |
+| :---------------- | :-------- | :------------ | :------------------------------------------------------------------------- |
+| **PostgreSQL**    | `5432`    | `5432`        | Primary Relational Database (`scheduler_db`)                               |
+| **Redis**         | `6379`    | `6379`        | Cache & In-Memory Store                                                    |
+| **RabbitMQ AMQP** | `5672`    | `5672`        | Message Broker AMQP Port                                                   |
+| **RabbitMQ UI**   | `15672`   | `15672`       | [http://localhost:15672](http://localhost:15672) (`guest`/`guest`)         |
+| **Prometheus**    | `9090`    | `9090`        | [http://localhost:9090](http://localhost:9090) Metrics Collector           |
+| **Grafana**       | `3000`    | `3000`        | [http://localhost:3000](http://localhost:3000) Dashboard (`admin`/`admin`) |
+| **Jaeger**        | `16686`   | `16686`       | [http://localhost:16686](http://localhost:16686) Distributed Tracing UI    |
+
+## Development Roadmap
+
+- [x] **Phase 1 — Repository Setup**: Nx Monorepo with NestJS, TypeScript, ESLint, Prettier.
+- [x] **Phase 2 — Infrastructure**: Docker Compose with PostgreSQL, Redis, RabbitMQ, Prometheus, Grafana, Jaeger.
+- [ ] **Phase 3 — Shared Packages**: Reusable infrastructure libraries (`database`, `rabbitmq`, `redis`, etc.).
+- [ ] **Phase 4 — First Service**: Scheduler CRUD API.
