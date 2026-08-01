@@ -7,12 +7,12 @@
     "build": "nx run-many -t build",
     "lint": "nx run-many -t lint",
     "test": "nx run-many -t test",
-    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
+    "format": "prettier --write \"**/*.{ts,js,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,json,md,yml,yaml}\"",
     "prepare": "husky",
-    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
-    "docker:down": "docker compose -f docker/docker-compose.yml down",
-    "docker:logs": "docker compose -f docker/docker-compose.yml logs -f"
+    "docker:up": "docker compose -f docker/compose/docker-compose.yml up -d",
+    "docker:down": "docker compose -f docker/compose/docker-compose.yml down",
+    "docker:logs": "docker compose -f docker/compose/docker-compose.yml logs -f"
   },
   "workspaces": [
     "apps/*",
@@ -20,11 +20,16 @@
   ],
   "dependencies": {
     "@nestjs/common": "^10.3.0",
+    "@nestjs/config": "^3.2.0",
     "@nestjs/core": "^10.3.0",
     "@nestjs/platform-express": "^10.3.0",
+    "nestjs-pino": "^4.0.0",
+    "pino": "^8.19.0",
+    "pino-pretty": "^10.3.1",
     "reflect-metadata": "^0.2.1",
     "rxjs": "^7.8.1",
-    "tslib": "^2.6.2"
+    "tslib": "^2.6.2",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",

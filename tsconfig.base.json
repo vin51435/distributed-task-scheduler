@@ -15,7 +15,17 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@scheduler-platform/*": ["packages/*/src"]
+      "@scheduler-platform/common": ["packages/common/src/index.ts"],
+      "@scheduler-platform/config": ["packages/config/src/index.ts"],
+      "@scheduler-platform/logger": ["packages/logger/src/index.ts"],
+      "@scheduler-platform/database": ["packages/database/src/index.ts"],
+      "@scheduler-platform/rabbitmq": ["packages/rabbitmq/src/index.ts"],
+      "@scheduler-platform/redis": ["packages/redis/src/index.ts"],
+      "@scheduler-platform/grpc": ["packages/grpc/src/index.ts"],
+      "@scheduler-platform/auth": ["packages/auth/src/index.ts"],
+      "@scheduler-platform/observability": ["packages/observability/src/index.ts"],
+      "@scheduler-platform/protobuf": ["packages/protobuf/src/index.ts"],
+      "@scheduler-platform/testing": ["packages/testing/src/index.ts"]
     },
     "strict": true,
     "noImplicitAny": true,
