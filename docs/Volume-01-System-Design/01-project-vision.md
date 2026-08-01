@@ -37,11 +37,11 @@
 
 The **Distributed Task Scheduler Platform** is a production-grade scheduling system designed to reliably execute tasks at specific times in the future. It is inspired by modern distributed scheduling systems such as:
 
-* AWS EventBridge Scheduler
-* Google Cloud Tasks
-* Temporal
-* Uber Cadence
-* Netflix Conductor
+- AWS EventBridge Scheduler
+- Google Cloud Tasks
+- Temporal
+- Uber Cadence
+- Netflix Conductor
 
 Unlike a simple cron job or a background worker, this scheduler is intended to operate as an independent infrastructure service that other applications can depend upon.
 
@@ -55,15 +55,15 @@ This document serves as the **single source of truth** for the project.
 
 It describes:
 
-* system requirements
-* architecture
-* infrastructure
-* service boundaries
-* APIs
-* databases
-* distributed algorithms
-* deployment
-* development roadmap
+- system requirements
+- architecture
+- infrastructure
+- service boundaries
+- APIs
+- databases
+- distributed algorithms
+- deployment
+- development roadmap
 
 It should be detailed enough that another engineer—or another AI—can build the system using this document alone.
 
@@ -77,22 +77,22 @@ The goal is to understand and implement the engineering concepts behind distribu
 
 Most web applications teach:
 
-* CRUD operations
-* authentication
-* REST APIs
-* database queries
+- CRUD operations
+- authentication
+- REST APIs
+- database queries
 
 Very few teach:
 
-* distributed scheduling
-* reliable message delivery
-* leader election
-* distributed coordination
-* retries
-* idempotency
-* fault tolerance
-* observability
-* microservice communication
+- distributed scheduling
+- reliable message delivery
+- leader election
+- distributed coordination
+- retries
+- idempotency
+- fault tolerance
+- observability
+- microservice communication
 
 This project fills that gap.
 
@@ -126,12 +126,12 @@ Imagine a user signs up for a service.
 
 The application needs to:
 
-* send a welcome email immediately
-* remind the user after 7 days
-* expire the trial after 14 days
-* bill the customer every month
-* retry failed payments
-* archive inactive accounts after one year
+- send a welcome email immediately
+- remind the user after 7 days
+- expire the trial after 14 days
+- bill the customer every month
+- retry failed payments
+- archive inactive accounts after one year
 
 A normal queue cannot efficiently hold messages for days or months.
 
@@ -327,10 +327,10 @@ Support configurable retry policies.
 
 Examples:
 
-* exponential backoff
-* fixed delay
-* linear retry
-* jitter
+- exponential backoff
+- fixed delay
+- linear retry
+- jitter
 
 ---
 
@@ -358,14 +358,14 @@ Each job should expose its current state.
 
 Possible states include:
 
-* WAITING
-* READY
-* RUNNING
-* SUCCESS
-* FAILED
-* RETRYING
-* DEAD_LETTER
-* CANCELLED
+- WAITING
+- READY
+- RUNNING
+- SUCCESS
+- FAILED
+- RETRYING
+- DEAD_LETTER
+- CANCELLED
 
 ---
 
@@ -407,12 +407,12 @@ Business Service
 
 Examples of responsibilities outside the scheduler:
 
-* payment processing
-* invoice generation
-* email rendering
-* authentication
-* PDF generation
-* SMS delivery
+- payment processing
+- invoice generation
+- email rendering
+- authentication
+- PDF generation
+- SMS delivery
 
 These belong to dedicated business services.
 
@@ -424,51 +424,51 @@ By completing this project, the developer should understand:
 
 ## Backend Engineering
 
-* REST APIs
-* gRPC
-* Protocol Buffers
-* NestJS
-* Docker
-* Kubernetes
+- REST APIs
+- gRPC
+- Protocol Buffers
+- NestJS
+- Docker
+- Kubernetes
 
 ---
 
 ## Databases
 
-* PostgreSQL
-* Redis
-* RabbitMQ
+- PostgreSQL
+- Redis
+- RabbitMQ
 
 Later:
 
-* Cassandra
+- Cassandra
 
 ---
 
 ## Distributed Systems
 
-* scheduling
-* partitioning
-* sharding
-* leader election
-* heartbeats
-* leases
-* distributed locks
-* retries
-* idempotency
-* fault tolerance
-* consistency
-* coordination
+- scheduling
+- partitioning
+- sharding
+- leader election
+- heartbeats
+- leases
+- distributed locks
+- retries
+- idempotency
+- fault tolerance
+- consistency
+- coordination
 
 ---
 
 ## Observability
 
-* Prometheus
-* Grafana
-* OpenTelemetry
-* Jaeger
-* Loki
+- Prometheus
+- Grafana
+- OpenTelemetry
+- Jaeger
+- Loki
 
 ---
 
@@ -476,62 +476,62 @@ Later:
 
 ## E-commerce
 
-* abandoned cart reminders
-* order confirmation
-* return reminders
+- abandoned cart reminders
+- order confirmation
+- return reminders
 
 ---
 
 ## SaaS
 
-* trial expiration
-* subscription renewal
-* onboarding emails
+- trial expiration
+- subscription renewal
+- onboarding emails
 
 ---
 
 ## Banking
 
-* EMI reminders
-* payment retries
-* statement generation
+- EMI reminders
+- payment retries
+- statement generation
 
 ---
 
 ## CRM
 
-* sales follow-ups
-* scheduled meetings
-* campaign automation
+- sales follow-ups
+- scheduled meetings
+- campaign automation
 
 ---
 
 ## IoT
 
-* device activation
-* firmware updates
-* maintenance windows
+- device activation
+- firmware updates
+- maintenance windows
 
 ---
 
 ## Notification Systems
 
-* push notifications
-* SMS scheduling
-* email campaigns
+- push notifications
+- SMS scheduling
+- email campaigns
 
 ---
 
 ## Billing
 
-* recurring invoices
-* subscription renewals
+- recurring invoices
+- subscription renewals
 
 ---
 
 ## Webhooks
 
-* retry failed webhook delivery
+- retry failed webhook delivery
 
 ---
 
@@ -863,17 +863,17 @@ The initial implementation is educational.
 
 The long-term goal is to evolve the platform into a production-grade scheduling service capable of supporting:
 
-* millions of scheduled jobs
-* multiple scanners
-* hundreds of workers
-* distributed coordination
-* automatic failover
-* multi-region deployment
-* advanced monitoring
-* high availability
-* disaster recovery
-* cloud-native deployment
-* service autoscaling
+- millions of scheduled jobs
+- multiple scanners
+- hundreds of workers
+- distributed coordination
+- automatic failover
+- multi-region deployment
+- advanced monitoring
+- high availability
+- disaster recovery
+- cloud-native deployment
+- service autoscaling
 
 ---
 
@@ -881,13 +881,13 @@ The long-term goal is to evolve the platform into a production-grade scheduling 
 
 The project will be considered successful when it can:
 
-* Reliably schedule one-time, delayed, and recurring jobs.
-* Continue operating when individual services fail.
-* Scale horizontally by running multiple scanners and workers.
-* Demonstrate idempotent execution under duplicate delivery.
-* Provide complete observability through logs, metrics, and traces.
-* Be deployed locally with Docker Compose and later to Kubernetes without architectural changes.
-* Serve as a reference implementation for distributed scheduling systems.
+- Reliably schedule one-time, delayed, and recurring jobs.
+- Continue operating when individual services fail.
+- Scale horizontally by running multiple scanners and workers.
+- Demonstrate idempotent execution under duplicate delivery.
+- Provide complete observability through logs, metrics, and traces.
+- Be deployed locally with Docker Compose and later to Kubernetes without architectural changes.
+- Serve as a reference implementation for distributed scheduling systems.
 
 ---
 

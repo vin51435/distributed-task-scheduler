@@ -878,19 +878,19 @@ Dependency inversion prevents cycles.
 Good imports:
 
 ```typescript
-import { LoggerService } from "@scheduler/logging";
+import { LoggerService } from '@scheduler/logging';
 
-import { RedisModule } from "@scheduler/redis";
+import { RedisModule } from '@scheduler/redis';
 
-import { DatabaseModule } from "@scheduler/database";
+import { DatabaseModule } from '@scheduler/database';
 
-import { AuthModule } from "@scheduler/auth";
+import { AuthModule } from '@scheduler/auth';
 ```
 
 Bad:
 
 ```typescript
-import { JobService } from "../../../scheduler-service/src/...";
+import { JobService } from '../../../scheduler-service/src/...';
 ```
 
 Applications must never reach into another application's source code.

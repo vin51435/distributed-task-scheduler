@@ -531,7 +531,7 @@ Secrets must never be stored in source code.
 Bad:
 
 ```typescript
-const PASSWORD = "admin123";
+const PASSWORD = 'admin123';
 ```
 
 Good:

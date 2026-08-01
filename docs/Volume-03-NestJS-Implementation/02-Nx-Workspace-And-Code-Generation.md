@@ -546,7 +546,7 @@ Centralized configuration keeps every project consistent.
 Instead of:
 
 ```typescript
-import { Logger } from "../../../../../../logging";
+import { Logger } from '../../../../../../logging';
 ```
 
 Use aliases.
@@ -554,19 +554,19 @@ Use aliases.
 Example:
 
 ```typescript
-import { LoggerService } from "@scheduler/logging";
+import { LoggerService } from '@scheduler/logging';
 ```
 
 Another:
 
 ```typescript
-import { DatabaseModule } from "@scheduler/database";
+import { DatabaseModule } from '@scheduler/database';
 ```
 
 Another:
 
 ```typescript
-import { RedisModule } from "@scheduler/redis";
+import { RedisModule } from '@scheduler/redis';
 ```
 
 Aliases improve readability and simplify refactoring.

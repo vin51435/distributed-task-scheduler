@@ -226,9 +226,9 @@ Every service starts similarly.
 const app = await NestFactory.createMicroservice(AppModule, {
   transport: Transport.GRPC,
   options: {
-    package: "scheduler",
-    protoPath: "proto/scheduler.proto",
-    url: "0.0.0.0:50052",
+    package: 'scheduler',
+    protoPath: 'proto/scheduler.proto',
+    url: '0.0.0.0:50052',
   },
 });
 

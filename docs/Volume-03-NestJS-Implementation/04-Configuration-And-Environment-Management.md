@@ -323,7 +323,7 @@ packages/common/config/
 Instead of:
 
 ```typescript
-configService.get("PORT");
+configService.get('PORT');
 ```
 
 Use typed configuration.
@@ -519,7 +519,7 @@ Never.
 Bad:
 
 ```typescript
-JWT_SECRET = "mysecret";
+JWT_SECRET = 'mysecret';
 ```
 
 inside Git.
