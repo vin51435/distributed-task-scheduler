@@ -1,1 +1,2 @@
-export * from './test-containers';
+export * from './containers/postgres';
+export * from './containers/redis';

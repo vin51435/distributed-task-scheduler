@@ -10,9 +10,9 @@
     "format": "prettier --write \"**/*.{ts,js,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,js,json,md,yml,yaml}\"",
     "prepare": "husky",
-    "docker:up": "docker compose -f docker/compose/docker-compose.yml up -d",
-    "docker:down": "docker compose -f docker/compose/docker-compose.yml down",
-    "docker:logs": "docker compose -f docker/compose/docker-compose.yml logs -f"
+    "docker:up": "docker compose -f docker/compose/dev.yml up -d",
+    "docker:down": "docker compose -f docker/compose/dev.yml down",
+    "docker:logs": "docker compose -f docker/compose/dev.yml logs -f"
   },
   "workspaces": [
     "apps/*",
@@ -47,6 +47,7 @@
     "@nx/js": "^19.5.0",
     "@nx/nest": "^19.5.0",
     "@nx/workspace": "^19.5.0",
+    "@types/express": "^5.0.6",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.0",
     "@types/pg": "^8.11.0",

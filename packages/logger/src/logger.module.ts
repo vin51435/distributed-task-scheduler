@@ -1,5 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
+import { requestContext } from './request-context';
 
 export interface AppLoggerModuleOptions {
   serviceName: string;
@@ -16,6 +17,14 @@ export class AppLoggerModule {
           pinoHttp: {
             name: options.serviceName,
             level: process.env.LOG_LEVEL || 'info',
+            mixin() {
+              const store = requestContext.getStore();
+              return {
+                service: store?.serviceName || options.serviceName,
+                correlationId: store?.correlationId,
+                requestId: store?.requestId,
+              };
+            },
             transport: isProd
               ? undefined
               : {
