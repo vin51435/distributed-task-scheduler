@@ -46,7 +46,7 @@
     "@nx/jest": "^19.5.0",
     "@nx/js": "^19.5.0",
     "@nx/nest": "^19.5.0",
-    "@nx/workspace": "^19.5.0",
+    "@nx/workspace": "^23.1.0",
     "@types/express": "^5.0.6",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.0",
