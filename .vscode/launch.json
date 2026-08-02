@@ -2,34 +2,14 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Debug All Microservices (Nx)",
       "type": "node",
       "request": "launch",
-      "name": "Debug scheduler with Nx",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "serve", "scheduler"],
-      "env": {
-        "NODE_OPTIONS": "--inspect=9229"
-      },
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "skipFiles": ["<node_internals>/**"],
-      "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/apps/scheduler/dist/**/*.(m|c|)js", "!**/node_modules/**"]
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Debug dispatcher with Nx",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "serve", "dispatcher"],
-      "env": {
-        "NODE_OPTIONS": "--inspect=9230"
-      },
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "skipFiles": ["<node_internals>/**"],
-      "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/apps/dispatcher/dist/**/*.(m|c|)js", "!**/node_modules/**"]
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "preLaunchTask": "Start Infrastructure (Docker)",
+      // "postDebugTask": "Stop Infrastructure (Docker)",
+      "console": "integratedTerminal"
     }
   ]
 }

@@ -12,7 +12,8 @@
     "prepare": "husky",
     "docker:up": "docker compose -f docker/compose/dev.yml up -d",
     "docker:down": "docker compose -f docker/compose/dev.yml down",
-    "docker:logs": "docker compose -f docker/compose/dev.yml logs -f"
+    "docker:logs": "docker compose -f docker/compose/dev.yml logs -f",
+    "dev": "nx run-many -t serve --all --parallel"
   },
   "workspaces": [
     "apps/*",

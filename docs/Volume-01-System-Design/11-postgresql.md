@@ -140,14 +140,14 @@ Each table has a clearly defined responsibility.
 
 # 11.6 Core Tables
 
-| Table                       | Purpose                          |
-| --------------------------- | -------------------------------- |
-| jobs                        | One-time scheduled jobs          |
-| schedules                   | Cron & recurring schedules       |
-| retry_history               | Retry attempts                   |
-| execution_history           | Execution log                    |
-| idempotency_keys            | API idempotency                  |
-| scanner_leases _(optional)_ | Local development lease metadata |
+| Table                        | Purpose                          |
+| ---------------------------- | -------------------------------- |
+| jobs                         | One-time scheduled jobs          |
+| schedules                    | Cron & recurring schedules       |
+| retry_history                | Retry attempts                   |
+| execution_history            | Execution log                    |
+| idempotency_keys             | API idempotency                  |
+| scanner*leases *(optional)\_ | Local development lease metadata |
 
 In production, lease ownership will eventually move to Redis/etcd rather than PostgreSQL.
 
