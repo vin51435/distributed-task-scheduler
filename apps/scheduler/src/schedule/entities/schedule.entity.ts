@@ -1,0 +1,41 @@
+import { Column, Entity } from 'typeorm';
+import { BaseEntity } from '@scheduler/database';
+
+export enum ScheduleType {
+  CRON = 'CRON',
+  ONE_OFF = 'ONE_OFF',
+}
+
+export enum ScheduleStatus {
+  ACTIVE = 'ACTIVE',
+  PAUSED = 'PAUSED',
+  COMPLETED = 'COMPLETED',
+  WAITING = 'WAITING',
+}
+
+@Entity({ name: 'schedules' })
+export class ScheduleEntity extends BaseEntity {
+  @Column({ type: 'varchar', length: 255 })
+  name!: string;
+
+  @Column({ type: 'text', nullable: true })
+  description?: string;
+
+  @Column({ type: 'enum', enum: ScheduleType, default: ScheduleType.CRON })
+  type!: ScheduleType;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  cron?: string;
+
+  @Column({ type: 'timestamp with time zone', name: 'execute_at', nullable: true })
+  executeAt?: Date;
+
+  @Column({ type: 'varchar', length: 100, default: 'UTC' })
+  timezone!: string;
+
+  @Column({ type: 'jsonb' })
+  payload!: Record<string, any>;
+
+  @Column({ type: 'enum', enum: ScheduleStatus, default: ScheduleStatus.ACTIVE })
+  status!: ScheduleStatus;
+}

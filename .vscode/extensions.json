@@ -4,6 +4,7 @@
     "esbenp.prettier-vscode",
     "ms-azuretools.vscode-docker",
     "redhat.vscode-yaml",
-    "zxh43.vscode-proto3"
+    "zxh43.vscode-proto3",
+    "firsttris.vscode-jest-runner"
   ]
 }
