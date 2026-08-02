@@ -14,6 +14,7 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
+    "rootDir": ".",
     "paths": {
       "@scheduler-platform/errors": ["packages/errors/src/index.ts"],
       "@scheduler-platform/errors/*": ["packages/errors/src/*"],
@@ -25,6 +26,8 @@
       "@scheduler-platform/database/*": ["packages/database/src/*"],
       "@scheduler-platform/testing": ["packages/testing/src/index.ts"],
       "@scheduler-platform/testing/*": ["packages/testing/src/*"],
+      "@scheduler-platform/rabbitmq": ["packages/rabbitmq/src/index.ts"],
+      "@scheduler-platform/rabbitmq/*": ["packages/rabbitmq/src/*"],
       "@scheduler/errors": ["packages/errors/src/index.ts"],
       "@scheduler/errors/*": ["packages/errors/src/*"],
       "@scheduler/config": ["packages/config/src/index.ts"],
@@ -34,7 +37,9 @@
       "@scheduler/database": ["packages/database/src/index.ts"],
       "@scheduler/database/*": ["packages/database/src/*"],
       "@scheduler/testing": ["packages/testing/src/index.ts"],
-      "@scheduler/testing/*": ["packages/testing/src/*"]
+      "@scheduler/testing/*": ["packages/testing/src/*"],
+      "@scheduler/rabbitmq": ["packages/rabbitmq/src/index.ts"],
+      "@scheduler/rabbitmq/*": ["packages/rabbitmq/src/*"]
     },
     "strict": true,
     "noImplicitAny": true,
