@@ -1,3 +1,7 @@
+> https://www.interviewwithbunny.com/systemdesign/15
+
+> https://davidnd.dev/blog/designing-distributed-task-scheduler/?utm_source=chatgpt.com
+
 Below is a prompt/summary you can directly paste into another ChatGPT conversation to continue the project.
 
 ---
