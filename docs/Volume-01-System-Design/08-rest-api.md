@@ -252,7 +252,7 @@ POST /api/v1/jobs
 ```json
 {
   "jobId": "job_12345",
-  "status": "WAITING",
+  "status": "READY",
   "createdAt": "2027-01-01T08:30:00Z"
 }
 ```
@@ -280,7 +280,7 @@ Allows updating:
 - priority
 - retry policy
 
-Only jobs in the `WAITING` state may be modified.
+Only jobs in the `READY` state may be modified.
 
 ---
 
@@ -416,7 +416,7 @@ Example
   "success": true,
   "data": {
     "jobId": "job123",
-    "status": "WAITING"
+    "status": "READY"
   }
 }
 ```
@@ -535,13 +535,13 @@ Clients may filter resources.
 Example
 
 ```http
-GET /jobs?status=WAITING
+GET /jobs?status=READY
 ```
 
 Multiple filters
 
 ```http
-GET /jobs?status=WAITING&priority=HIGH
+GET /jobs?status=READY&priority=HIGH
 ```
 
 Sorting

@@ -358,7 +358,7 @@ Each job should expose its current state.
 
 Possible states include:
 
-- WAITING
+- READY
 - READY
 - RUNNING
 - SUCCESS

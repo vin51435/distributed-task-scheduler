@@ -217,7 +217,7 @@ Our `dead_letter_jobs` table stores **business failures**.
 # 11.5 Job Lifecycle
 
 ```text id="l3ahpt"
-WAITING
+READY
 
 ↓
 

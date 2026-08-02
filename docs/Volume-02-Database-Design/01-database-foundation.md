@@ -205,7 +205,7 @@ Example:
 SELECT *
 FROM scheduler.jobs
 WHERE tenant_id = :tenantId
-  AND status = 'WAITING';
+  AND status = 'READY';
 ```
 
 This ensures:
@@ -227,7 +227,7 @@ A typical job progresses through the database as follows:
 INSERT Job
      │
      ▼
-WAITING
+READY
      │
      ▼
 DISPATCHED
@@ -248,7 +248,7 @@ RUNNING
 FAILED
    │
    ▼
-WAITING (retry)
+READY (retry)
 ```
 
 Each transition is recorded explicitly, enabling recovery after crashes.

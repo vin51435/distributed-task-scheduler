@@ -297,7 +297,7 @@ Repeat
 Promotion changes the job state:
 
 ```text
-WAITING
+READY
 
 ↓
 

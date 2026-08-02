@@ -136,7 +136,7 @@ Persist Job
 
       ▼
 
-WAITING
+READY
 
       │
 
@@ -215,7 +215,7 @@ Create Job
 
 ↓
 
-WAITING
+READY
 
 ↓
 
@@ -267,7 +267,7 @@ Generate Job
 
 ↓
 
-WAITING
+READY
 ```
 
 The original schedule remains unchanged while each occurrence creates a new job.
@@ -291,7 +291,7 @@ Update execute_at
 
 ↓
 
-WAITING
+READY
 ```
 
 ---
@@ -340,7 +340,7 @@ SELECT *
 
 FROM jobs
 
-WHERE status='WAITING'
+WHERE status='READY'
 
 AND execute_at <= NOW()
 
@@ -364,7 +364,7 @@ This avoids full-table scans and allows efficient range lookups.
 Promotion is the act of moving a job from durable storage to the execution broker.
 
 ```text
-WAITING
+READY
 
 ↓
 
@@ -398,7 +398,7 @@ This ordering prevents jobs from being marked as dispatched before they are safe
 The Timer Store enforces valid state transitions.
 
 ```text
-WAITING
+READY
 
 ↓
 
@@ -428,13 +428,13 @@ RETRYING
 
 ↓
 
-WAITING
+READY
 ```
 
 Cancellation path:
 
 ```text
-WAITING
+READY
 
 ↓
 
@@ -450,7 +450,7 @@ COMPLETED
 
 ↓
 
-WAITING
+READY
 
 ❌ Invalid
 ```
@@ -526,7 +526,7 @@ Failed
 
 ↓
 
-Job Remains WAITING
+Job Remains READY
 ```
 
 The scanner retries later.

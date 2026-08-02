@@ -516,7 +516,7 @@ Used only if querying payload fields becomes necessary.
 Allowed transitions:
 
 ```text
-WAITING
+READY
 
 ↓
 
@@ -548,7 +548,7 @@ FAILED
 
 ↓
 
-WAITING
+READY
 ```
 
 Dead letter:
@@ -572,7 +572,7 @@ Most common query:
 ```sql
 SELECT *
 FROM scheduler.jobs
-WHERE status='WAITING'
+WHERE status='READY'
 AND execute_at<=NOW()
 ORDER BY execute_at
 LIMIT 500;

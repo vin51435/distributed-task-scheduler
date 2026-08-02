@@ -536,7 +536,7 @@ currentStatus
 Examples:
 
 ```text
-WAITING
+READY
 
 DISPATCHED
 
@@ -788,7 +788,7 @@ SELECT id,
        execute_at,
        priority
 FROM scheduler.jobs
-WHERE status = 'WAITING'
+WHERE status = 'READY'
 ORDER BY execute_at;
 ```
 

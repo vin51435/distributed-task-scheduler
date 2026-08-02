@@ -53,7 +53,7 @@ A naive implementation scans the `jobs` table every second:
 SELECT *
 FROM scheduler.jobs
 WHERE execute_at <= NOW()
-AND status = 'WAITING';
+AND status = 'READY';
 ```
 
 This works for:
@@ -667,7 +667,7 @@ Jobs inside bucket:
 SELECT *
 FROM scheduler.jobs
 WHERE bucket_id = $1
-AND status='WAITING';
+AND status='READY';
 ```
 
 Expired leases:

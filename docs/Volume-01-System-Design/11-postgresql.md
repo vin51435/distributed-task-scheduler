@@ -164,7 +164,7 @@ Every job moves through a finite set of states.
 
                ▼
 
-            WAITING
+            READY
 
                │
 
@@ -194,13 +194,13 @@ Every job moves through a finite set of states.
 
                      ▼
 
-                 WAITING
+                 READY
 ```
 
 Alternative terminal state:
 
 ```text
-WAITING
+READY
 
 ↓
 
@@ -328,7 +328,7 @@ Scanner index:
 Allows efficient queries such as:
 
 ```sql
-WHERE status = 'WAITING'
+WHERE status = 'READY'
 AND execute_at <= NOW()
 ```
 
@@ -384,7 +384,7 @@ SELECT *
 
 FROM jobs
 
-WHERE status='WAITING'
+WHERE status='READY'
 
 AND execute_at <= NOW()
 
@@ -620,7 +620,7 @@ Jobs
 
 ↓
 
-Remain WAITING
+Remain READY
 
 ↓
 
