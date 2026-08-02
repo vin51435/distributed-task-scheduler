@@ -1,4 +1,5 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Optional } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CronExpressionParser } from 'cron-parser';
 import { ScheduleStatus, ScheduleType, JobStatus } from '@scheduler/database';
 import { ScannerRepository } from './scanner.repository';
@@ -26,7 +27,17 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
   private lastScanTime: Date | null = null;
   private pollingIntervalMs = 5000;
 
-  constructor(private readonly repository: ScannerRepository) {}
+  constructor(
+    private readonly repository: ScannerRepository,
+    @Optional() private readonly configService?: ConfigService,
+  ) {
+    if (this.configService) {
+      const configuredInterval = this.configService.get<number>('SCANNER_POLLING_INTERVAL_MS');
+      if (configuredInterval && !isNaN(Number(configuredInterval))) {
+        this.pollingIntervalMs = Number(configuredInterval);
+      }
+    }
+  }
 
   onModuleInit() {
     this.startPolling();
