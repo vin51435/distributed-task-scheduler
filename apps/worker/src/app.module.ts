@@ -4,13 +4,14 @@ import { AppConfigModule, appConfigSchema } from '@scheduler/config';
 import { AppLoggerModule } from '@scheduler/logger';
 import { DatabaseModule, ScheduleEntity, JobEntity, ExecutionEntity } from '@scheduler/database';
 import { RabbitMQModule } from '@scheduler/rabbitmq';
-import { DispatcherModule } from './dispatcher/dispatcher.module';
+import { WorkerModule } from './worker/worker.module';
 import { HealthModule } from './health/health.module';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
     AppConfigModule.forRoot(appConfigSchema),
-    AppLoggerModule.forRoot({ serviceName: 'dispatcher-service' }),
+    AppLoggerModule.forRoot({ serviceName: 'worker-service' }),
     DatabaseModule.forRoot({
       entities: [ScheduleEntity, JobEntity, ExecutionEntity],
     }),
@@ -23,8 +24,9 @@ import { HealthModule } from './health/health.module';
         routingKey: configService.get<string>('RABBITMQ_ROUTING_KEY') || 'job.execute',
       }),
     }),
-    DispatcherModule,
+    WorkerModule,
     HealthModule,
+    MetricsModule,
   ],
 })
 export class AppModule {}

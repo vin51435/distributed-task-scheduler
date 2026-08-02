@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppConfigModule, appConfigSchema } from '@scheduler/config';
 import { AppLoggerModule } from '@scheduler/logger';
-import { DatabaseModule, ScheduleEntity, JobEntity } from '@scheduler/database';
+import { DatabaseModule, ScheduleEntity, JobEntity, ExecutionEntity } from '@scheduler/database';
 import { ScheduleModule } from './schedule/schedule.module';
 
 @Module({
@@ -9,7 +9,7 @@ import { ScheduleModule } from './schedule/schedule.module';
     AppConfigModule.forRoot(appConfigSchema),
     AppLoggerModule.forRoot({ serviceName: 'scheduler-service' }),
     DatabaseModule.forRoot({
-      entities: [ScheduleEntity, JobEntity],
+      entities: [ScheduleEntity, JobEntity, ExecutionEntity],
     }),
     ScheduleModule,
   ],
