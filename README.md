@@ -1,20 +1,97 @@
-# Distributed Task Scheduler
+# Distributed Task Scheduler & Execution Platform
 
-A fault-tolerant, highly available, and scalable distributed task scheduling and execution system.
+A general-purpose, fault-tolerant, highly available, and scalable distributed task scheduling and execution system (supporting emails, notifications, webhooks, media processing, AI inference, backups, data pipelines, etc.).
+
+## 3-Plane System Architecture
+
+The platform separates responsibilities into three distinct planes:
+
+```text
+                         ┌────────────────────────────┐
+                         │        API Gateway         │
+                         └─────────────┬──────────────┘
+                                       │
+                ┌──────────────────────┼──────────────────────┐
+                │                      │                      │
+                ▼                      ▼                      ▼
+        Scheduler Service      Identity Service      Notification API
+                │
+                ▼
+        PostgreSQL (Schedules)
+                │
+═══════════════════════════════════════════════════════════════════════
+                     TIMING PLANE
+═══════════════════════════════════════════════════════════════════════
+                │
+                ▼
+          Scanner Service  ──(Finds due schedules)──► PostgreSQL (Jobs: status = READY)
+                │
+═══════════════════════════════════════════════════════════════════════
+                    DISPATCH PLANE
+═══════════════════════════════════════════════════════════════════════
+                │
+                ▼
+        Dispatcher Service ──(Batch reads READY jobs, attaches routing key)
+                │
+                ▼
+        RabbitMQ Exchange (Topic Routing)
+                │
+═══════════════════════════════════════════════════════════════════════
+                    EXECUTION PLANE
+═══════════════════════════════════════════════════════════════════════
+                │
+        ┌───────┼────────┬─────────┬─────────┐
+        ▼       ▼        ▼         ▼         ▼
+    email.q  webhook.q image.q   ai.q     custom.q
+        │       │        │         │         │
+        ▼       ▼        ▼         ▼         ▼
+   Email Worker Webhook Worker Image Worker AI Worker
+        │       │        │         │         │
+        └───────┴────────┴─────────┴─────────┘
+                         │
+                         ▼
+        PostgreSQL (Executions History: Job -> Execution #1, #2...)
+```
+
+### Architectural Planes & Responsibilities
+
+1. **Timing Plane** (_When should work happen?_):
+   - **Scheduler Service**: Manages user schedule definitions (`POST /schedules`, CRON expressions, one-off time specifications).
+   - **Scanner Service**: Periodically scans `schedules` where `next_execute_at <= NOW()`, creates job records with `status = READY`, and updates recurring schedule execution times.
+   - **Data Model**: `Schedules` $\rightarrow$ `Jobs` (`status = READY`).
+
+2. **Dispatch Plane** (_How does work reach the correct execution channel?_):
+   - **Dispatcher Service**: Reads `READY` jobs in batches, validates payloads, attaches routing keys (`worker.email`, `worker.webhook`, `worker.image`, `worker.ai`), and publishes to the RabbitMQ Topic Exchange.
+   - Updates job status: `READY` $\rightarrow$ `DISPATCHED` upon receiving publisher confirmations (ACK).
+
+3. **Execution Plane** (_How is work actually performed?_):
+   - **Specialized Workers**: Decoupled worker deployments consuming from targeted queues (`email.queue`, `webhook.queue`, `image.queue`, `ai.queue`).
+   - Workers execute business tasks and persist run details (`started_at`, `finished_at`, `error_message`) into the **`Executions`** table.
+   - Status lifecycle: `READY` $\rightarrow$ `DISPATCHED` $\rightarrow$ `RUNNING` $\rightarrow$ `SUCCEEDED` / `FAILED`.
 
 ## Project Structure
 
 ```text
-scheduler-platform/
-├── apps/         # Applications (Scheduler, Scanner, Dispatcher, Worker, etc.)
-├── packages/     # Shared packages (database, grpc, rabbitmq, redis, etc.)
-├── proto/        # Protocol buffer definitions
-├── docker/       # Local infrastructure setup (Docker Compose)
-├── kubernetes/   # Kubernetes manifests and Helm charts
-└── docs/         # Architectural documentation
+distributed-task-scheduler/
+├── scheduler-api/             # API Gateway & Scheduler Service (Schedules CRUD & intent)
+├── timer-service/             # High-precision timer store & schedule trigger engine
+├── scanner-service/           # Partitioned scanner promoting due schedules to READY jobs
+├── dispatcher-service/        # Batch reader publishing READY jobs to RabbitMQ Topic Exchange
+├── worker-service/            # Specialized execution workers (Email, Webhook, Image, AI)
+├── cron-service/              # Cron expression parser & recurring schedule evaluator
+├── coordinator-service/       # Leader election, partition leasing, and Redis locking
+├── notification-service/      # Event-driven notification and webhook service
+├── shared/                    # Monorepo shared modules (proto, common, config, logger, database)
+│   ├── proto/                 # Protocol buffer definitions for gRPC & IPC
+│   ├── common/                # Shared utilities, types, and constants
+│   ├── config/                # Environment configuration management
+│   └── logger/                # Structured JSON logging initialization
+├── docker/                    # Docker Compose specs & local infrastructure
+├── kubernetes/                # Kubernetes manifests, Helm charts, and Kustomize overlays
+└── scripts/                   # Setup, build, migration, and automation scripts
 ```
 
-## Infrastructure (Phase 2)
+## Infrastructure
 
 Local development infrastructure is managed via Docker Compose.
 
@@ -45,7 +122,10 @@ npm run docker:down
 
 ## Development Roadmap
 
-- [x] **Phase 1 — Repository Setup**: Nx Monorepo with NestJS, TypeScript, ESLint, Prettier.
+- [x] **Phase 1 — Repository Setup**: Monorepo with NestJS, TypeScript, ESLint, Prettier.
 - [x] **Phase 2 — Infrastructure**: Docker Compose with PostgreSQL, Redis, RabbitMQ, Prometheus, Grafana, Jaeger.
-- [ ] **Phase 3 — Shared Packages**: Reusable infrastructure libraries (`database`, `rabbitmq`, `redis`, etc.).
-- [ ] **Phase 4 — First Service**: Scheduler CRUD API.
+- [x] **Phase 3 — Documentation**: 3-Plane Architecture refactoring (Timing, Dispatch, Execution).
+- [ ] **Phase 4 — Shared Packages**: Reusable infrastructure libraries (`database`, `rabbitmq`, `redis`, etc.).
+- [ ] **Phase 5 — Scheduler & Scanner Services**: Schedules management and `READY` job generation.
+- [ ] **Phase 6 — Dispatcher & RabbitMQ Exchange**: Topic routing and batch publishing.
+- [ ] **Phase 7 — Specialized Execution Workers**: Specialized worker deployments and `Executions` table history.

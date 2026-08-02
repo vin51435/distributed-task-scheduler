@@ -73,7 +73,7 @@ RabbitMQ only stores work that is **currently being executed**.
 
 Example:
 
-```text
+````text
 Create Job
 
 ↓
@@ -82,7 +82,7 @@ PostgreSQL
 
 ↓
 
-WAITING
+READY
 
 ↓
 
@@ -90,16 +90,19 @@ Scanner
 
 ↓
 
-RabbitMQ
+Dispatcher (Exchange Routing)
 
 ↓
 
-Worker
+RabbitMQ Specialized Queue
+
+↓
+
+Worker Execution
 
 ↓
 
 Completed
-```
 
 ---
 
@@ -108,20 +111,18 @@ Completed
 The jobs table stores:
 
 - Job metadata
-- Execution time
-- Current status
-- Priority
-- Payload
-- Retry policy
-- Ownership
-- Scheduling metadata
-- Correlation information
-- Tenant information
+- Target `worker_type` and RabbitMQ `routing_key`
+- Scheduled execution time (`execute_at`)
+- Current status (`READY`, `DISPATCHED`, `RUNNING`, `SUCCEEDED`, `FAILED`)
+- Priority level
+- Attempt counter
+- Tenant information (`tenant_id`)
+- Payload data
 
 It deliberately does **not** store:
 
-- Execution logs
-- Audit history
+- Granular execution attempt logs (stored in `executions` table)
+- Audit history (stored in `audit_events` table)
 - Notification history
 - Worker metrics
 
@@ -148,52 +149,43 @@ The schema prioritizes write efficiency because new jobs and state transitions o
 
 # 4.5 Job Lifecycle
 
-A typical lifecycle:
+A typical 3-Plane lifecycle:
 
 ```text
-INSERT
+Schedules Table (Intent)
+    │
+    ▼
+INSERT (jobs table: status = READY)
+    │
+    ▼
+DISPATCHED (Dispatcher attaches routing key & publishes to exchange)
+    │
+    ▼
+RUNNING (Specialized worker picks up & starts execution)
+    │
+    ▼
+SUCCEEDED (or FAILED -> Retries revert to READY)
+````
 
-↓
+Failure & Retry path:
 
-WAITING
-
-↓
-
+```text
+RUNNING
+    │
+    ▼
+FAILED (Execution record logged in Executions table)
+    │
+    ▼
+READY (Retry policy recalculates execute_at & increments attempt)
+    │
+    ▼
 DISPATCHED
-
-↓
-
+    │
+    ▼
 RUNNING
-
-↓
-
-COMPLETED
-```
-
-Failure path:
-
-```text
-RUNNING
-
-↓
-
-FAILED
-
-↓
-
-WAITING (Retry)
-
-↓
-
-RUNNING
-
-↓
-
-FAILED
-
-↓
-
-DLQ
+    │
+    ▼
+SUCCEEDED (or DLQ if max attempts reached)
 ```
 
 Every transition is explicit.

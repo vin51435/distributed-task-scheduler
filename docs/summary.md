@@ -98,64 +98,62 @@ Cloud
 
 ---
 
-# High-Level Architecture
+# High-Level 3-Plane Architecture
 
 ```text
-Users
-
-↓
-
-REST API
-
-↓
-
-API Gateway (NestJS)
-
-↓
-
-Timer Service
-
-↓
-
-PostgreSQL (Timer Store)
-
-↓
-
-Scanner Service
-
-↓
-
-Dispatcher Service
-
-↓
-
-RabbitMQ
-
-↓
-
-Worker Services
-
-↓
-
-Business Logic
-
-↓
-
-Notification Service
-
-↓
-
-External APIs
+                         ┌────────────────────────────┐
+                         │        API Gateway         │
+                         └─────────────┬──────────────┘
+                                       │
+                ┌──────────────────────┼──────────────────────┐
+                │                      │                      │
+                ▼                      ▼                      ▼
+        Scheduler Service      Identity Service      Notification API
+                │
+                ▼
+        PostgreSQL (Schedules)
+                │
+═══════════════════════════════════════════════════════════════════════
+                     TIMING PLANE
+═══════════════════════════════════════════════════════════════════════
+                │
+                ▼
+          Scanner Service  ──(Finds due schedules)──► PostgreSQL (Jobs: status = READY)
+                │
+═══════════════════════════════════════════════════════════════════════
+                    DISPATCH PLANE
+═══════════════════════════════════════════════════════════════════════
+                │
+                ▼
+        Dispatcher Service ──(Batch reads READY jobs, attaches routing key)
+                │
+                ▼
+        RabbitMQ Exchange (Topic Routing)
+                │
+═══════════════════════════════════════════════════════════════════════
+                    EXECUTION PLANE
+═══════════════════════════════════════════════════════════════════════
+                │
+        ┌───────┼────────┬─────────┬─────────┐
+        ▼       ▼        ▼         ▼         ▼
+    email.q  webhook.q image.q   ai.q     custom.q
+        │       │        │         │         │
+        ▼       ▼        ▼         ▼         ▼
+   Email Worker Webhook Worker Image Worker AI Worker
+        │       │        │         │         │
+        └───────┴────────┴─────────┴─────────┘
+                         │
+                         ▼
+        PostgreSQL (Executions History: Job -> Execution #1, #2...)
 ```
 
 Supporting Services
 
 - Cron Service
+- Identity Service
 - Audit Service
-- Monitoring
-- Logging
-- Metrics
-- Distributed Tracing
+- Notification Service
+- Observability Stack (Prometheus, Grafana, Loki, Jaeger)
 
 ---
 
@@ -170,117 +168,112 @@ Every service is:
 
 Persistent state exists only in:
 
-- PostgreSQL
-- RabbitMQ
-- Redis
-- MinIO
+- PostgreSQL (Schedules, Jobs, Executions, Audit)
+- RabbitMQ (Exchange & Dedicated Worker Queues)
+- Redis (Locks, Leases, Idempotency Cache)
+- MinIO (Payload/Artifact Storage)
 
 No service owns local state.
 
 ---
 
-# Major Concepts Designed
+# 3-Plane Architecture Breakdown
 
-We intentionally separated scheduling into two planes.
+The system cleanly decouples concerns into three distinct operational planes:
 
-## Timing Plane
+## 1. Timing Plane — _When should something happen?_
 
-Responsible for:
+Responsible for user intent, schedule storage, cron evaluation, and scanner promotion. It does **not** handle job transport or execution.
 
-- storing schedules
-- recurring jobs
-- cron expansion
-- timer scanning
-- promotion
-
-Services:
-
-- Timer Service
-- Cron Service
-- Scanner Service
+- **Scheduler Service**: Manages schedules (`POST /schedules`, `GET /schedules/:id`). Stores cron patterns, timezone, target worker type, and payload in the `schedules` table.
+- **Scanner Service**: Continuously queries `schedules WHERE next_execute_at <= NOW() AND active = true`. For each due schedule, it creates a `jobs` record with `status = READY` and updates `next_execute_at`.
 
 ---
 
-## Execution Plane
+## 2. Dispatch Plane — _How does work reach the correct execution channel?_
 
-Responsible for:
+Responsible for transporting work efficiently without coupling to worker implementations.
 
-- dispatching
-- queueing
-- execution
-- retries
-- notifications
-
-Services:
-
-- Dispatcher
-- RabbitMQ
-- Workers
-- Notification Service
+- **Dispatcher Service**: Queries `jobs WHERE status = 'READY' LIMIT 500`. Attaches the appropriate routing key (e.g., `worker.email`, `worker.webhook`, `worker.ai`) based on `worker_type`, publishes to `scheduler.exchange` in RabbitMQ, and updates `status = DISPATCHED` upon receiving publisher confirmations (ACK).
+- **RabbitMQ Topic Exchange**: Routes messages based on routing keys (`worker.<type>`) to dedicated queues (`email.queue`, `webhook.queue`, `image.queue`, `ai.queue`).
 
 ---
 
-# Complete Job Flow
+## 3. Execution Plane — _How is the work actually performed?_
+
+Responsible for consuming tasks, executing business logic, and tracking execution attempt history.
+
+- **Specialized Workers**: Decoupled worker microservices (`EmailWorker`, `WebhookWorker`, `ImageWorker`, `AIWorker`) consuming from their specialized queues.
+- **Executions Storage**: Each execution attempt creates an entry in the `executions` table (`job_id`, `attempt_number`, `status`, `started_at`, `finished_at`, `error_message`), keeping the `jobs` entity clean while storing detailed run histories.
+
+---
+
+# Complete Job Lifecycle & Status Transitions
 
 ```text
 Client
-
-↓
-
-Create Job
-
-↓
-
-REST API
-
-↓
-
-Timer Service
-
-↓
-
-PostgreSQL
-
-↓
-
-WAITING
-
-↓
-
-Scanner
-
-↓
-
-Lease
-
-↓
-
-Dispatcher
-
-↓
-
-RabbitMQ
-
-↓
-
-Worker
-
-↓
-
-Business Logic
-
-↓
-
-Notification
-
-↓
-
-Audit
-
-↓
-
-Completed
+  │
+  ▼
+Create Schedule (POST /schedules)
+  │
+  ▼
+Schedules Table
+  │
+  ▼
+Scanner Service (finds due schedules)
+  │
+Creates Job (status = READY)
+  │
+  ▼
+Jobs Table (status = READY)
+  │
+  ▼
+Dispatcher Service (reads READY batch)
+  │
+Publishes to RabbitMQ Topic Exchange (with routing key: worker.<type>)
+  │
+Updates Job (status = DISPATCHED)
+  │
+  ▼
+RabbitMQ Exchange ──► Dedicated Queue (email.queue, webhook.queue, etc.)
+  │
+  ▼
+Specialized Worker Consumes
+  │
+  ▼
+Executions Table (records attempt: status = RUNNING)
+  │
+  ▼
+Task Result ──► SUCCEEDED / FAILED (Retries update Job execute_at & status = READY)
 ```
+
+---
+
+# System Database Model Evolution
+
+```text
+Schedules (Intent & Cron definition)
+    │
+    ▼ 1:N
+Jobs (Concrete execution instance: status = READY / DISPATCHED / COMPLETED)
+    │
+    ▼ 1:N
+Executions (Granular attempt records: started_at, finished_at, error_message)
+```
+
+---
+
+# Component Modification & Refinement Summary
+
+| Component              |     Status     | Refinement                                                                                                            |
+| :--------------------- | :------------: | :-------------------------------------------------------------------------------------------------------------------- |
+| **Scheduler Service**  |    ✅ Keep     | Manages user schedule definitions and payload intent.                                                                 |
+| **Scanner Service**    |    ✅ Keep     | Scans due schedules and creates `READY` jobs populating `worker_type`, `routing_key`, and `priority`.                 |
+| **Jobs Table**         |   ✏️ Expand    | Added `worker_type`, `routing_key`, `priority`, `attempt`, `tenant_id`. Status changed from `WAITING` to `READY`.     |
+| **Dispatcher Service** |   ➕ Update    | Publishes to RabbitMQ **Exchange** with topic routing keys instead of direct single queue.                            |
+| **RabbitMQ System**    |   ➕ Update    | Uses Topic Exchange routing (`scheduler.exchange` $\rightarrow$ `worker.email`, `worker.webhook`, `worker.ai`, etc.). |
+| **Worker Services**    | ➕ Specialized | Split into specialized worker deployments scaling independently according to queue type.                              |
+| **Executions Table**   |  ➕ New Table  | Added to track individual execution run histories (`attempt_number`, `started_at`, `finished_at`, `error_message`).   |
 
 ---
 
