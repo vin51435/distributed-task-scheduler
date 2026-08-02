@@ -14,6 +14,7 @@ describe('ScheduleController', () => {
     description: 'Test Description',
     type: ScheduleType.CRON,
     cron: '0 * * * *',
+    nextExecuteAt: new Date('2026-08-02T12:00:00Z'),
     timezone: 'UTC',
     payload: { task: 'test' },
     status: ScheduleStatus.ACTIVE,

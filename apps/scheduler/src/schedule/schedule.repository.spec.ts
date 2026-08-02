@@ -14,6 +14,7 @@ describe('ScheduleRepository', () => {
     description: 'Test Description',
     type: ScheduleType.CRON,
     cron: '0 * * * *',
+    nextExecuteAt: new Date(),
     timezone: 'UTC',
     payload: { task: 'test' },
     status: ScheduleStatus.ACTIVE,

@@ -25,10 +25,10 @@ async function bootstrap() {
   app.setGlobalPrefix(globalPrefix);
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Scheduler Service')
-    .setDescription('Distributed Task Scheduler - Scheduler Service API')
+    .setTitle('Scanner Service')
+    .setDescription('Distributed Task Scheduler - Scanner Service Operational API')
     .setVersion('1.0.0')
-    .addTag('schedules')
+    .addTag('scanner')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
@@ -38,11 +38,11 @@ async function bootstrap() {
     },
   });
 
-  const port = process.env.SCHEDULER_PORT || 3001;
+  const port = process.env.SCANNER_PORT || 3002;
   await app.listen(port);
 
   const logger = app.get(Logger);
-  logger.log(`🚀 Scheduler Service running on: http://localhost:${port}/${globalPrefix}`);
+  logger.log(`🚀 Scanner Service running on: http://localhost:${port}/${globalPrefix}`);
 }
 
 bootstrap();

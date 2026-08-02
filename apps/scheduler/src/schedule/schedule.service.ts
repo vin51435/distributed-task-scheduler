@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { CronExpressionParser } from 'cron-parser';
 import { ScheduleRepository } from './schedule.repository';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
-import { ScheduleEntity, ScheduleType } from './entities/schedule.entity';
+import { ScheduleEntity, ScheduleType, ScheduleStatus } from './entities/schedule.entity';
 
 @Injectable()
 export class ScheduleService {
@@ -11,15 +12,29 @@ export class ScheduleService {
   async createSchedule(dto: CreateScheduleDto): Promise<ScheduleEntity> {
     this.validateScheduleTypeRules(dto.type, dto.cron, dto.executeAt);
 
+    let nextExecuteAt: Date | undefined;
+    const timezone = dto.timezone ?? 'UTC';
+
+    if (dto.type === ScheduleType.ONE_OFF && dto.executeAt) {
+      nextExecuteAt = new Date(dto.executeAt);
+    } else if (dto.type === ScheduleType.CRON && dto.cron) {
+      try {
+        const interval = CronExpressionParser.parse(dto.cron, { tz: timezone });
+        nextExecuteAt = interval.next().toDate();
+      } catch (err: any) {
+        throw new BadRequestException(`Invalid cron expression "${dto.cron}": ${err.message}`);
+      }
+    }
+
     return this.scheduleRepository.create({
       name: dto.name,
       description: dto.description,
       type: dto.type,
       cron: dto.cron,
-      executeAt: dto.executeAt ? new Date(dto.executeAt) : undefined,
-      timezone: dto.timezone ?? 'UTC',
+      nextExecuteAt,
+      timezone,
       payload: dto.payload,
-      status: dto.status,
+      status: dto.status ?? ScheduleStatus.ACTIVE,
     });
   }
 
@@ -41,13 +56,30 @@ export class ScheduleService {
     const targetType = dto.type ?? existing.type;
     const targetCron = dto.cron !== undefined ? dto.cron : existing.cron;
     const targetExecuteAt =
-      dto.executeAt !== undefined ? dto.executeAt : existing.executeAt?.toISOString();
+      dto.executeAt !== undefined ? dto.executeAt : existing.nextExecuteAt?.toISOString();
+    const targetTimezone = dto.timezone ?? existing.timezone;
 
     this.validateScheduleTypeRules(targetType, targetCron, targetExecuteAt);
 
+    let nextExecuteAt: Date | undefined = existing.nextExecuteAt;
+    if (dto.executeAt !== undefined && targetType === ScheduleType.ONE_OFF) {
+      nextExecuteAt = dto.executeAt ? new Date(dto.executeAt) : undefined;
+    } else if (
+      (dto.cron !== undefined || dto.timezone !== undefined) &&
+      targetType === ScheduleType.CRON &&
+      targetCron
+    ) {
+      try {
+        const interval = CronExpressionParser.parse(targetCron, { tz: targetTimezone });
+        nextExecuteAt = interval.next().toDate();
+      } catch (err: any) {
+        throw new BadRequestException(`Invalid cron expression "${targetCron}": ${err.message}`);
+      }
+    }
+
     const updated = await this.scheduleRepository.update(id, {
       ...dto,
-      executeAt: dto.executeAt ? new Date(dto.executeAt) : undefined,
+      nextExecuteAt,
     });
 
     if (!updated) {

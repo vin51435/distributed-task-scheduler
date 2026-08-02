@@ -18,6 +18,9 @@ export class ScheduleResponseDto {
   cron?: string;
 
   @ApiPropertyOptional({ example: '2026-12-31T23:59:59.000Z' })
+  nextExecuteAt?: Date;
+
+  @ApiPropertyOptional({ example: '2026-12-31T23:59:59.000Z' })
   executeAt?: Date;
 
   @ApiProperty({ example: 'UTC' })
@@ -42,7 +45,8 @@ export class ScheduleResponseDto {
       description: entity.description,
       type: entity.type,
       cron: entity.cron,
-      executeAt: entity.executeAt,
+      nextExecuteAt: entity.nextExecuteAt,
+      executeAt: entity.nextExecuteAt,
       timezone: entity.timezone ?? 'UTC',
       payload: entity.payload,
       status: entity.status,
