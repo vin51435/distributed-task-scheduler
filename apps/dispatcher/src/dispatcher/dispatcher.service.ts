@@ -115,30 +115,44 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
     let failedCount = 0;
 
     try {
-      const waitingJobs = await this.repository.findWaitingJobs(this.batchSize);
+      const readyJobs = await this.repository.findReadyJobs(this.batchSize);
 
-      if (waitingJobs.length > 0) {
-        this.logger.log(`Found ${waitingJobs.length} WAITING job(s) for dispatch`);
+      if (readyJobs.length > 0) {
+        this.logger.log(`Found ${readyJobs.length} READY job(s) for dispatch`);
       }
 
-      for (const job of waitingJobs) {
+      for (const job of readyJobs) {
         try {
+          const effectiveRoutingKey =
+            job.routingKey ||
+            (job.workerType ? `worker.${job.workerType.toLowerCase()}` : this.routingKey);
+
           const payloadEnvelope = {
             jobId: job.id,
             scheduleId: job.scheduleId,
+            workerType: job.workerType,
+            routingKey: effectiveRoutingKey,
+            priority: job.priority || 0,
+            tenantId: job.tenantId,
             executeAt: job.executeAt instanceof Date ? job.executeAt.toISOString() : job.executeAt,
             payload: job.payload,
           };
 
-          await this.publisherService.publish(this.exchangeName, this.routingKey, payloadEnvelope);
+          await this.publisherService.publish(
+            this.exchangeName,
+            effectiveRoutingKey,
+            payloadEnvelope,
+          );
 
           await this.repository.updateJobStatus(job.id, JobStatus.DISPATCHED);
           dispatchedCount++;
-          this.logger.log(`Job ${job.id} published to RabbitMQ and updated to DISPATCHED`);
+          this.logger.log(
+            `Job ${job.id} published to RabbitMQ exchange '${this.exchangeName}' with routingKey '${effectiveRoutingKey}' and updated to DISPATCHED`,
+          );
         } catch (err: any) {
           failedCount++;
           this.logger.error(
-            `Failed to publish job ${job.id} to RabbitMQ. Leaving status as WAITING. Error: ${err.message}`,
+            `Failed to publish job ${job.id} to RabbitMQ. Leaving status as READY. Error: ${err.message}`,
             err.stack,
           );
         }
@@ -146,12 +160,12 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
 
       this.totalDispatched += dispatchedCount;
       this.totalFailed += failedCount;
-      if (waitingJobs.length > 0) {
+      if (readyJobs.length > 0) {
         this.lastDispatchTime = new Date();
       }
 
       return {
-        fetched: waitingJobs.length,
+        fetched: readyJobs.length,
         dispatched: dispatchedCount,
         failed: failedCount,
       };

@@ -10,9 +10,9 @@ export class DispatcherRepository {
     private readonly jobRepository: Repository<JobEntity>,
   ) {}
 
-  async findWaitingJobs(limit: number): Promise<JobEntity[]> {
+  async findReadyJobs(limit: number): Promise<JobEntity[]> {
     return this.jobRepository.find({
-      where: { status: JobStatus.WAITING },
+      where: { status: JobStatus.READY },
       order: { executeAt: 'ASC' },
       take: limit,
     });

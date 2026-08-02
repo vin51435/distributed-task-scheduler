@@ -38,4 +38,16 @@ export class ScheduleEntity extends BaseEntity {
 
   @Column({ type: 'enum', enum: ScheduleStatus, default: ScheduleStatus.ACTIVE })
   status!: ScheduleStatus;
+
+  @Column({ type: 'varchar', length: 100, nullable: true, name: 'worker_type' })
+  workerType?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'routing_key' })
+  routingKey?: string;
+
+  @Column({ type: 'integer', default: 0 })
+  priority?: number;
+
+  @Column({ type: 'uuid', nullable: true, name: 'tenant_id' })
+  tenantId?: string;
 }

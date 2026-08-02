@@ -58,4 +58,29 @@ export class CreateScheduleDto {
   @IsOptional()
   @IsEnum(ScheduleStatus)
   status?: ScheduleStatus;
+
+  @ApiPropertyOptional({
+    description: 'Target worker microservice type (e.g. EMAIL, WEBHOOK, AI)',
+    example: 'EMAIL',
+  })
+  @IsOptional()
+  @IsString()
+  workerType?: string;
+
+  @ApiPropertyOptional({ description: 'RabbitMQ topic routing key', example: 'worker.email' })
+  @IsOptional()
+  @IsString()
+  routingKey?: string;
+
+  @ApiPropertyOptional({ description: 'Job priority', example: 1, default: 0 })
+  @IsOptional()
+  priority?: number;
+
+  @ApiPropertyOptional({
+    description: 'Tenant Identifier UUID',
+    example: 'd3b07384-d113-460a-4c0a-000000000000',
+  })
+  @IsOptional()
+  @IsString()
+  tenantId?: string;
 }

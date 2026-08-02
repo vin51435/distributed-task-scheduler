@@ -31,7 +31,7 @@ describe('ScannerRepository', () => {
   const mockJob: JobEntity = {
     id: 'job-123',
     scheduleId: mockSchedule.id,
-    status: JobStatus.WAITING,
+    status: JobStatus.READY,
     executeAt: mockSchedule.nextExecuteAt!,
     payload: mockSchedule.payload,
     attempt: 0,
@@ -95,7 +95,7 @@ describe('ScannerRepository', () => {
     it('should create and save a new Job entity', async () => {
       const jobData: Partial<JobEntity> = {
         scheduleId: mockSchedule.id,
-        status: JobStatus.WAITING,
+        status: JobStatus.READY,
         executeAt: mockSchedule.nextExecuteAt,
         payload: mockSchedule.payload,
         attempt: 0,

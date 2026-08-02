@@ -41,7 +41,7 @@ describe('ScannerService', () => {
   const mockJob: JobEntity = {
     id: 'job-1',
     scheduleId: 'one-off-123',
-    status: JobStatus.WAITING,
+    status: JobStatus.READY,
     executeAt: new Date('2026-08-02T10:00:00Z'),
     payload: { task: 'one_off_task' },
     attempt: 0,
@@ -91,10 +91,14 @@ describe('ScannerService', () => {
       expect(repository.findDueSchedules).toHaveBeenCalledWith(now, 500);
       expect(repository.createJob).toHaveBeenCalledWith({
         scheduleId: mockOneOffSchedule.id,
-        status: JobStatus.WAITING,
+        status: JobStatus.READY,
         executeAt: mockOneOffSchedule.nextExecuteAt,
         payload: mockOneOffSchedule.payload,
         attempt: 0,
+        workerType: undefined,
+        routingKey: undefined,
+        priority: 0,
+        tenantId: undefined,
       });
       expect(repository.updateSchedule).toHaveBeenCalledWith(mockOneOffSchedule.id, {
         status: ScheduleStatus.COMPLETED,
@@ -110,10 +114,14 @@ describe('ScannerService', () => {
 
       expect(repository.createJob).toHaveBeenCalledWith({
         scheduleId: mockCronSchedule.id,
-        status: JobStatus.WAITING,
+        status: JobStatus.READY,
         executeAt: mockCronSchedule.nextExecuteAt,
         payload: mockCronSchedule.payload,
         attempt: 0,
+        workerType: undefined,
+        routingKey: undefined,
+        priority: 0,
+        tenantId: undefined,
       });
       expect(repository.updateSchedule).toHaveBeenCalledWith(
         mockCronSchedule.id,

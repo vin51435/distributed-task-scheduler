@@ -12,7 +12,7 @@ describe('DispatcherService', () => {
   const mockJob: JobEntity = {
     id: 'job-100',
     scheduleId: 'sched-500',
-    status: JobStatus.WAITING,
+    status: JobStatus.READY,
     executeAt: new Date('2026-08-02T12:00:00Z'),
     payload: { task: 'send_email' },
     attempt: 0,
@@ -22,7 +22,7 @@ describe('DispatcherService', () => {
 
   beforeEach(async () => {
     const mockRepo = {
-      findWaitingJobs: jest.fn().mockResolvedValue([]),
+      findReadyJobs: jest.fn().mockResolvedValue([]),
       updateJobStatus: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -61,16 +61,20 @@ describe('DispatcherService', () => {
   });
 
   describe('dispatchBatch', () => {
-    it('should publish WAITING job to RabbitMQ and update status to DISPATCHED', async () => {
-      repository.findWaitingJobs.mockResolvedValueOnce([mockJob]);
+    it('should publish READY job to RabbitMQ and update status to DISPATCHED', async () => {
+      repository.findReadyJobs.mockResolvedValueOnce([mockJob]);
       publisherService.publish.mockResolvedValueOnce(true);
 
       const result = await service.dispatchBatch();
 
-      expect(repository.findWaitingJobs).toHaveBeenCalledWith(500);
+      expect(repository.findReadyJobs).toHaveBeenCalledWith(500);
       expect(publisherService.publish).toHaveBeenCalledWith('scheduler.exchange', 'job.execute', {
         jobId: mockJob.id,
         scheduleId: mockJob.scheduleId,
+        workerType: undefined,
+        routingKey: 'job.execute',
+        priority: 0,
+        tenantId: undefined,
         executeAt: mockJob.executeAt.toISOString(),
         payload: mockJob.payload,
       });
@@ -78,8 +82,8 @@ describe('DispatcherService', () => {
       expect(result).toEqual({ fetched: 1, dispatched: 1, failed: 0 });
     });
 
-    it('should leave job status as WAITING if publish to RabbitMQ fails', async () => {
-      repository.findWaitingJobs.mockResolvedValueOnce([mockJob]);
+    it('should leave job status as READY if publish to RabbitMQ fails', async () => {
+      repository.findReadyJobs.mockResolvedValueOnce([mockJob]);
       publisherService.publish.mockRejectedValueOnce(new Error('Broker connection lost'));
 
       const result = await service.dispatchBatch();
@@ -89,8 +93,8 @@ describe('DispatcherService', () => {
       expect(result).toEqual({ fetched: 1, dispatched: 0, failed: 1 });
     });
 
-    it('should return 0 fetched when no WAITING jobs exist', async () => {
-      repository.findWaitingJobs.mockResolvedValueOnce([]);
+    it('should return 0 fetched when no READY jobs exist', async () => {
+      repository.findReadyJobs.mockResolvedValueOnce([]);
 
       const result = await service.dispatchBatch();
 
@@ -100,9 +104,9 @@ describe('DispatcherService', () => {
     });
   });
 
-  describe('getMetrics', () => {
-    it('should accurately track total dispatched and failed count', async () => {
-      repository.findWaitingJobs.mockResolvedValueOnce([mockJob]);
+  describe('metrics', () => {
+    it('should accurately report totalDispatched and totalFailed metrics', async () => {
+      repository.findReadyJobs.mockResolvedValueOnce([mockJob]);
       publisherService.publish.mockResolvedValueOnce(true);
 
       await service.dispatchBatch();
@@ -110,7 +114,6 @@ describe('DispatcherService', () => {
       const metrics = service.getMetrics();
       expect(metrics.totalDispatched).toBe(1);
       expect(metrics.totalFailed).toBe(0);
-      expect(metrics.batchSize).toBe(500);
       expect(metrics.lastDispatchTime).toBeInstanceOf(Date);
     });
   });

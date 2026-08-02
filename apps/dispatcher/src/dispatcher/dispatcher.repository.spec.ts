@@ -8,10 +8,10 @@ describe('DispatcherRepository', () => {
   let repository: DispatcherRepository;
   let typeormRepo: jest.Mocked<Repository<JobEntity>>;
 
-  const mockWaitingJob: JobEntity = {
+  const mockReadyJob: JobEntity = {
     id: 'job-1',
     scheduleId: 'sched-1',
-    status: JobStatus.WAITING,
+    status: JobStatus.READY,
     executeAt: new Date('2026-08-02T12:00:00Z'),
     payload: { action: 'run' },
     attempt: 0,
@@ -43,18 +43,18 @@ describe('DispatcherRepository', () => {
     expect(repository).toBeDefined();
   });
 
-  describe('findWaitingJobs', () => {
-    it('should query jobs with WAITING status ordered by executeAt ASC with batch limit', async () => {
-      typeormRepo.find.mockResolvedValueOnce([mockWaitingJob]);
+  describe('findReadyJobs', () => {
+    it('should query jobs with READY status ordered by executeAt ASC with batch limit', async () => {
+      typeormRepo.find.mockResolvedValueOnce([mockReadyJob]);
 
-      const result = await repository.findWaitingJobs(500);
+      const result = await repository.findReadyJobs(500);
 
       expect(typeormRepo.find).toHaveBeenCalledWith({
-        where: { status: JobStatus.WAITING },
+        where: { status: JobStatus.READY },
         order: { executeAt: 'ASC' },
         take: 500,
       });
-      expect(result).toEqual([mockWaitingJob]);
+      expect(result).toEqual([mockReadyJob]);
     });
   });
 

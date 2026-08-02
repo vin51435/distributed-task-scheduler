@@ -109,10 +109,16 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
 
           await this.repository.createJob({
             scheduleId: schedule.id,
-            status: JobStatus.WAITING,
+            status: JobStatus.READY,
             executeAt: executeAtTime,
             payload: schedule.payload,
             attempt: 0,
+            workerType: schedule.workerType,
+            routingKey:
+              schedule.routingKey ||
+              (schedule.workerType ? `worker.${schedule.workerType.toLowerCase()}` : undefined),
+            priority: schedule.priority || 0,
+            tenantId: schedule.tenantId,
           });
 
           jobsCreatedCount++;
