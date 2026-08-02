@@ -12,13 +12,17 @@ export class ScannerRepository {
     private readonly jobRepo: Repository<JobEntity>,
   ) {}
 
-  async findDueSchedules(now: Date = new Date()): Promise<ScheduleEntity[]> {
+  async findDueSchedules(
+    now: Date = new Date(),
+    batchSize: number = 500,
+  ): Promise<ScheduleEntity[]> {
     return this.scheduleRepo.find({
       where: {
         status: ScheduleStatus.ACTIVE,
         nextExecuteAt: LessThanOrEqual(now),
       },
       order: { nextExecuteAt: 'ASC' },
+      take: batchSize,
     });
   }
 

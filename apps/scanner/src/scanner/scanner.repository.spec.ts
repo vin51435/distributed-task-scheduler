@@ -75,9 +75,9 @@ describe('ScannerRepository', () => {
   });
 
   describe('findDueSchedules', () => {
-    it('should query schedules with status ACTIVE and nextExecuteAt <= now', async () => {
+    it('should query schedules with status ACTIVE, nextExecuteAt <= now and limit by batchSize', async () => {
       const now = new Date('2026-08-02T13:00:00Z');
-      const result = await repository.findDueSchedules(now);
+      const result = await repository.findDueSchedules(now, 100);
 
       expect(scheduleRepo.find).toHaveBeenCalledWith({
         where: {
@@ -85,6 +85,7 @@ describe('ScannerRepository', () => {
           nextExecuteAt: LessThanOrEqual(now),
         },
         order: { nextExecuteAt: 'ASC' },
+        take: 100,
       });
       expect(result).toEqual([mockSchedule]);
     });

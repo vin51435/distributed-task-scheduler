@@ -88,7 +88,7 @@ describe('ScannerService', () => {
       const now = new Date('2026-08-02T10:05:00Z');
       const result = await service.scan(now);
 
-      expect(repository.findDueSchedules).toHaveBeenCalledWith(now);
+      expect(repository.findDueSchedules).toHaveBeenCalledWith(now, 500);
       expect(repository.createJob).toHaveBeenCalledWith({
         scheduleId: mockOneOffSchedule.id,
         status: JobStatus.WAITING,
@@ -149,6 +149,7 @@ describe('ScannerService', () => {
       const metrics = service.getMetrics();
       expect(metrics.totalScans).toBe(1);
       expect(metrics.jobsCreated).toBe(1);
+      expect(metrics.batchSize).toBe(500);
       expect(metrics.lastScanTime).toBeInstanceOf(Date);
     });
   });

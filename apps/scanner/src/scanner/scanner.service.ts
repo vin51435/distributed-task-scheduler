@@ -14,6 +14,7 @@ export interface ScannerMetrics {
   jobsCreated: number;
   lastScanTime: Date | null;
   pollingIntervalMs: number;
+  batchSize: number;
   isPollingActive: boolean;
 }
 
@@ -22,10 +23,12 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ScannerService.name);
   private timer: NodeJS.Timeout | null = null;
   private isScanning = false;
+  private isPollingActive = false;
   private totalScans = 0;
   private totalJobsCreated = 0;
   private lastScanTime: Date | null = null;
   private pollingIntervalMs = 5000;
+  private batchSize = 500;
 
   constructor(
     private readonly repository: ScannerRepository,
@@ -35,6 +38,11 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
       const configuredInterval = this.configService.get<number>('SCANNER_POLLING_INTERVAL_MS');
       if (configuredInterval && !isNaN(Number(configuredInterval))) {
         this.pollingIntervalMs = Number(configuredInterval);
+      }
+
+      const configuredBatchSize = this.configService.get<number>('SCANNER_BATCH_SIZE');
+      if (configuredBatchSize && !isNaN(Number(configuredBatchSize))) {
+        this.batchSize = Number(configuredBatchSize);
       }
     }
   }
@@ -49,22 +57,36 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
 
   public startPolling(intervalMs: number = this.pollingIntervalMs) {
     this.pollingIntervalMs = intervalMs;
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
-    this.timer = setInterval(() => {
-      this.scan().catch((err) => {
-        this.logger.error(`Error during automated scan loop: ${err.message}`, err.stack);
-      });
-    }, this.pollingIntervalMs);
-    this.logger.log(`Scanner polling started with interval ${this.pollingIntervalMs}ms`);
+    this.stopPolling();
+    this.isPollingActive = true;
+    this.runLoop();
+    this.logger.log(
+      `Scanner self-scheduling polling loop started with interval ${this.pollingIntervalMs}ms and batch size ${this.batchSize}`,
+    );
   }
 
   public stopPolling() {
+    this.isPollingActive = false;
     if (this.timer) {
-      clearInterval(this.timer);
+      clearTimeout(this.timer);
       this.timer = null;
       this.logger.log('Scanner polling stopped');
+    }
+  }
+
+  private async runLoop() {
+    if (!this.isPollingActive) return;
+
+    try {
+      await this.scan();
+    } catch (err: any) {
+      this.logger.error(`Error during automated scan loop: ${err.message}`, err.stack);
+    } finally {
+      if (this.isPollingActive) {
+        this.timer = setTimeout(() => {
+          this.runLoop();
+        }, this.pollingIntervalMs);
+      }
     }
   }
 
@@ -78,7 +100,7 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
     let jobsCreatedCount = 0;
 
     try {
-      const dueSchedules = await this.repository.findDueSchedules(now);
+      const dueSchedules = await this.repository.findDueSchedules(now, this.batchSize);
       this.logger.log(`Found ${dueSchedules.length} due schedule(s) at ${now.toISOString()}`);
 
       for (const schedule of dueSchedules) {
@@ -136,7 +158,8 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
       jobsCreated: this.totalJobsCreated,
       lastScanTime: this.lastScanTime,
       pollingIntervalMs: this.pollingIntervalMs,
-      isPollingActive: this.timer !== null,
+      batchSize: this.batchSize,
+      isPollingActive: this.isPollingActive,
     };
   }
 

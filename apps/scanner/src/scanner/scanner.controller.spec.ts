@@ -14,6 +14,7 @@ describe('ScannerController', () => {
         jobsCreated: 10,
         lastScanTime: new Date('2026-08-02T12:00:00Z'),
         pollingIntervalMs: 5000,
+        batchSize: 500,
         isPollingActive: true,
       }),
     };
