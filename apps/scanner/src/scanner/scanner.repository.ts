@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThanOrEqual, Repository } from 'typeorm';
+import { LessThanOrEqual, In, Repository } from 'typeorm';
 import { ScheduleEntity, ScheduleStatus, JobEntity } from '@scheduler/database';
 
 @Injectable()
@@ -15,12 +15,19 @@ export class ScannerRepository {
   async findDueSchedules(
     now: Date = new Date(),
     batchSize: number = 500,
+    buckets?: number[],
   ): Promise<ScheduleEntity[]> {
+    const whereCondition: any = {
+      status: ScheduleStatus.ACTIVE,
+      nextExecuteAt: LessThanOrEqual(now),
+    };
+
+    if (buckets && buckets.length > 0) {
+      whereCondition.bucket = In(buckets);
+    }
+
     return this.scheduleRepo.find({
-      where: {
-        status: ScheduleStatus.ACTIVE,
-        nextExecuteAt: LessThanOrEqual(now),
-      },
+      where: whereCondition,
       order: { nextExecuteAt: 'ASC' },
       take: batchSize,
     });
