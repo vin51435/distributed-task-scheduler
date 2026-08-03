@@ -45,9 +45,8 @@ describe('ScannerController (e2e)', () => {
     expect(response.body).toHaveProperty('jobsCreated');
   });
 
-  it('GET /api/metrics - should return scanner metrics', async () => {
+  it('GET /api/metrics - should return Prometheus scanner metrics', async () => {
     const response = await request(app.getHttpServer()).get('/api/metrics').expect(200);
-    expect(response.body).toHaveProperty('totalScans');
-    expect(response.body).toHaveProperty('jobsCreated');
+    expect(response.text).toContain('scanner_jobs_created_total');
   });
 });

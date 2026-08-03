@@ -43,7 +43,13 @@
       "@scheduler/rabbitmq": ["packages/rabbitmq/src/index.ts"],
       "@scheduler/rabbitmq/*": ["packages/rabbitmq/src/*"],
       "@scheduler/redis": ["packages/redis/src/index.ts"],
-      "@scheduler/redis/*": ["packages/redis/src/*"]
+      "@scheduler/redis/*": ["packages/redis/src/*"],
+      "@scheduler-platform/telemetry": ["packages/telemetry/src/index.ts"],
+      "@scheduler-platform/telemetry/*": ["packages/telemetry/src/*"],
+      "@scheduler-platform/metrics": ["packages/metrics/src/index.ts"],
+      "@scheduler-platform/metrics/*": ["packages/metrics/src/*"],
+      "@scheduler-platform/elasticsearch": ["packages/elasticsearch/src/index.ts"],
+      "@scheduler-platform/elasticsearch/*": ["packages/elasticsearch/src/*"]
     },
     "strict": true,
     "noImplicitAny": true,

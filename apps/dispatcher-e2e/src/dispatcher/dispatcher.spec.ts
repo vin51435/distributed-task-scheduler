@@ -19,12 +19,9 @@ describe('Dispatcher Service Operational API (e2e)', () => {
     expect(res.data.data).toHaveProperty('failed');
   });
 
-  it('GET /api/metrics - should return dispatcher operational metrics', async () => {
+  it('GET /api/metrics - should return Prometheus dispatcher operational metrics', async () => {
     const res = await axios.get('/api/metrics');
     expect(res.status).toBe(200);
-    expect(res.data.data).toHaveProperty('totalDispatched');
-    expect(res.data.data).toHaveProperty('totalFailed');
-    expect(res.data.data).toHaveProperty('batchSize');
-    expect(res.data.data).toHaveProperty('pollingIntervalMs');
+    expect(res.data).toContain('dispatcher_publish_total');
   });
 });

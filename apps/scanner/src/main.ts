@@ -1,4 +1,9 @@
 import 'dotenv/config';
+import { initTracing } from '@scheduler-platform/telemetry';
+
+// Initialize OpenTelemetry SDK before loading Nest app modules
+initTracing('scanner-service');
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -38,7 +43,7 @@ async function bootstrap() {
     },
   });
 
-  const port = process.env.SCANNER_PORT || 3002;
+  const port = process.env.SCANNER_PORT || 3001;
   await app.listen(port);
 
   const logger = app.get(Logger);

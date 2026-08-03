@@ -1,4 +1,9 @@
 import 'dotenv/config';
+import { initTracing } from '@scheduler-platform/telemetry';
+
+// Initialize OpenTelemetry SDK before loading Nest app modules
+initTracing('scheduler-service');
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -29,6 +34,7 @@ async function bootstrap() {
     .setDescription('Distributed Task Scheduler - Scheduler Service API')
     .setVersion('1.0.0')
     .addTag('schedules')
+    .addTag('admin')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
@@ -38,7 +44,7 @@ async function bootstrap() {
     },
   });
 
-  const port = process.env.SCHEDULER_PORT || 3001;
+  const port = process.env.SCHEDULER_PORT || 3000;
   await app.listen(port);
 
   const logger = app.get(Logger);
