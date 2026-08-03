@@ -1,5 +1,6 @@
 export type Result<T, E = Error> =
-  { success: true; data: T; error?: undefined } | { success: false; data?: undefined; error: E };
+  | { success: true; data: T; error?: undefined }
+  | { success: false; data?: undefined; error: E };
 
 export const ok = <T>(data: T): Result<T, never> => ({
   success: true,

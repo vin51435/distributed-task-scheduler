@@ -7,6 +7,7 @@ build/
 tmp/
 .nx/
 .nx/cache
+*.tsbuildinfo
 
 # Logs
 npm-debug.log*

@@ -327,7 +327,7 @@ Timer Service stores job in PostgreSQL.
 Status:
 
 ```text
-WAITING
+READY
 ```
 
 ↓

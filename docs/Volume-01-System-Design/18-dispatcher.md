@@ -156,7 +156,7 @@ Before publishing, the Dispatcher validates the execution request.
 Validation includes:
 
 - Job exists
-- Job state is `WAITING`
+- Job state is `READY`
 - Handler is registered
 - Payload is valid
 - Retry information is consistent
@@ -339,7 +339,7 @@ Failed
 Retry Later
 ```
 
-The job remains in the `WAITING` state.
+The job remains in the `READY` state.
 
 ---
 

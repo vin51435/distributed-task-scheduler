@@ -1,0 +1,17 @@
+{
+  "name": "scheduler-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "implicitDependencies": ["scheduler"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
+      "dependsOn": ["scheduler:build"],
+      "options": {
+        "jestConfig": "apps/scheduler-e2e/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  }
+}

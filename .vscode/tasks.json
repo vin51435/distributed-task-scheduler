@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "docker:up",
+      "problemMatcher": [],
+      "label": "Start Infrastructure (Docker)",
+      "detail": "Spins up PostgreSQL, Redis, RabbitMQ, Prometheus, Grafana, and Jaeger containers in background"
+    },
+    {
+      "type": "npm",
+      "script": "docker:down",
+      "problemMatcher": [],
+      "label": "Stop Infrastructure (Docker)",
+      "detail": "Stops all PostgreSQL, Redis, RabbitMQ, Prometheus, Grafana, and Jaeger containers"
+    },
+    {
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "label": "Run All Microservices (Nx)",
+      "detail": "Starts Docker infrastructure first, then runs all microservices in parallel in a single terminal",
+      "dependsOn": ["Start Infrastructure (Docker)"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

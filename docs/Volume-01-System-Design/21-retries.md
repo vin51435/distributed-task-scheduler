@@ -202,7 +202,7 @@ Update execute_at
 
 ↓
 
-WAITING
+READY
 
 ↓
 
@@ -360,7 +360,7 @@ Update execute_at
 
 ↓
 
-WAITING
+READY
 
 ↓
 
@@ -524,7 +524,7 @@ RabbitMQ Down
 
 ↓
 
-WAITING
+READY
 
 ↓
 

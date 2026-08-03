@@ -195,7 +195,7 @@ Update Job
 
 ↓
 
-WAITING
+READY
 
 ↓
 
@@ -639,7 +639,7 @@ Find jobs ready for retry:
 SELECT *
 FROM scheduler.jobs
 WHERE next_retry_at <= NOW()
-AND status = 'WAITING';
+AND status = 'READY';
 ```
 
 ---

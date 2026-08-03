@@ -254,7 +254,7 @@ Renew Lease
 Promotion consists of several ordered operations.
 
 ```text
-WAITING Job
+READY Job
 
 ↓
 
@@ -474,7 +474,7 @@ Status NOT Updated
 Retry Later
 ```
 
-Jobs remain in the `WAITING` state until promotion succeeds.
+Jobs remain in the `READY` state until promotion succeeds.
 
 ---
 
@@ -507,7 +507,7 @@ Stopping promotion prevents duplicate ownership during coordination failures.
 Only query indexed columns.
 
 ```sql
-WHERE status='WAITING'
+WHERE status='READY'
 
 AND execute_at <= NOW()
 ```

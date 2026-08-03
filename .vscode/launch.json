@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug All Microservices (Nx)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "preLaunchTask": "Start Infrastructure (Docker)",
+      // "postDebugTask": "Stop Infrastructure (Docker)",
+      "console": "integratedTerminal"
+    }
+  ]
+}

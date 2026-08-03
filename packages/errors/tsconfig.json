@@ -4,7 +4,11 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "composite": true,
-    "declaration": true
+    "declaration": true,
+    "types": ["node", "jest"],
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.spec.ts"],
+  "references": [{ "path": "../database" }]
 }

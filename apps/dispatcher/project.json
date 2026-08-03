@@ -1,0 +1,49 @@
+{
+  "name": "dispatcher",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/dispatcher/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/dispatcher",
+        "main": "apps/dispatcher/src/main.ts",
+        "tsConfig": "apps/dispatcher/tsconfig.app.json",
+        "webpackConfig": "apps/dispatcher/webpack.config.js",
+        "assets": ["apps/dispatcher/src/assets"]
+      },
+      "configurations": {
+        "development": {},
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "dispatcher:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "dispatcher:build:development"
+        },
+        "production": {
+          "buildTarget": "dispatcher:build:production"
+        }
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/dispatcher/jest.config.ts"
+      }
+    }
+  }
+}
