@@ -4,6 +4,7 @@ import { ScheduleRepository } from './schedule.repository';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { ScheduleEntity, ScheduleType, ScheduleStatus } from './entities/schedule.entity';
+import { calculateBucket } from '@scheduler/redis';
 
 @Injectable()
 export class ScheduleService {
@@ -41,6 +42,7 @@ export class ScheduleService {
       tenantId: dto.tenantId,
       maxAttempts: dto.maxAttempts,
       retryPolicy: dto.retryPolicy,
+      bucket: calculateBucket(dto.name),
     });
   }
 

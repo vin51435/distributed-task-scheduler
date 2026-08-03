@@ -62,4 +62,7 @@ export class ScheduleEntity extends BaseEntity {
 
   @Column({ type: 'uuid', nullable: true, name: 'tenant_id' })
   tenantId?: string;
+
+  @Column({ type: 'smallint', default: 0 })
+  bucket?: number;
 }

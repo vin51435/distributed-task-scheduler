@@ -28,6 +28,8 @@
       "@scheduler-platform/testing/*": ["packages/testing/src/*"],
       "@scheduler-platform/rabbitmq": ["packages/rabbitmq/src/index.ts"],
       "@scheduler-platform/rabbitmq/*": ["packages/rabbitmq/src/*"],
+      "@scheduler-platform/redis": ["packages/redis/src/index.ts"],
+      "@scheduler-platform/redis/*": ["packages/redis/src/*"],
       "@scheduler/errors": ["packages/errors/src/index.ts"],
       "@scheduler/errors/*": ["packages/errors/src/*"],
       "@scheduler/config": ["packages/config/src/index.ts"],
@@ -39,7 +41,9 @@
       "@scheduler/testing": ["packages/testing/src/index.ts"],
       "@scheduler/testing/*": ["packages/testing/src/*"],
       "@scheduler/rabbitmq": ["packages/rabbitmq/src/index.ts"],
-      "@scheduler/rabbitmq/*": ["packages/rabbitmq/src/*"]
+      "@scheduler/rabbitmq/*": ["packages/rabbitmq/src/*"],
+      "@scheduler/redis": ["packages/redis/src/index.ts"],
+      "@scheduler/redis/*": ["packages/redis/src/*"]
     },
     "strict": true,
     "noImplicitAny": true,
