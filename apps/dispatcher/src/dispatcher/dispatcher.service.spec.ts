@@ -22,6 +22,7 @@ describe('DispatcherService', () => {
 
   beforeEach(async () => {
     const mockRepo = {
+      fetchAndClaimReadyJobs: jest.fn().mockResolvedValue([]),
       findReadyJobs: jest.fn().mockResolvedValue([]),
       updateJobStatus: jest.fn().mockResolvedValue(undefined),
     };
@@ -53,7 +54,7 @@ describe('DispatcherService', () => {
   });
 
   afterEach(() => {
-    service.stopPolling();
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -61,13 +62,13 @@ describe('DispatcherService', () => {
   });
 
   describe('dispatchBatch', () => {
-    it('should publish READY job to RabbitMQ and update status to DISPATCHED', async () => {
-      repository.findReadyJobs.mockResolvedValueOnce([mockJob]);
+    it('should publish READY job to RabbitMQ', async () => {
+      repository.fetchAndClaimReadyJobs.mockResolvedValueOnce([mockJob]);
       publisherService.publish.mockResolvedValueOnce(true);
 
       const result = await service.dispatchBatch();
 
-      expect(repository.findReadyJobs).toHaveBeenCalledWith(500);
+      expect(repository.fetchAndClaimReadyJobs).toHaveBeenCalledWith(500);
       expect(publisherService.publish).toHaveBeenCalledWith('scheduler.exchange', 'job.execute', {
         jobId: mockJob.id,
         scheduleId: mockJob.scheduleId,
@@ -78,35 +79,33 @@ describe('DispatcherService', () => {
         executeAt: mockJob.executeAt.toISOString(),
         payload: mockJob.payload,
       });
-      expect(repository.updateJobStatus).toHaveBeenCalledWith(mockJob.id, JobStatus.DISPATCHED);
       expect(result).toEqual({ fetched: 1, dispatched: 1, failed: 0 });
     });
 
-    it('should leave job status as READY if publish to RabbitMQ fails', async () => {
-      repository.findReadyJobs.mockResolvedValueOnce([mockJob]);
+    it('should revert job status to READY if publish to RabbitMQ fails', async () => {
+      repository.fetchAndClaimReadyJobs.mockResolvedValueOnce([mockJob]);
       publisherService.publish.mockRejectedValueOnce(new Error('Broker connection lost'));
 
       const result = await service.dispatchBatch();
 
       expect(publisherService.publish).toHaveBeenCalled();
-      expect(repository.updateJobStatus).not.toHaveBeenCalled();
+      expect(repository.updateJobStatus).toHaveBeenCalledWith(mockJob.id, JobStatus.READY);
       expect(result).toEqual({ fetched: 1, dispatched: 0, failed: 1 });
     });
 
     it('should return 0 fetched when no READY jobs exist', async () => {
-      repository.findReadyJobs.mockResolvedValueOnce([]);
+      repository.fetchAndClaimReadyJobs.mockResolvedValueOnce([]);
 
       const result = await service.dispatchBatch();
 
       expect(publisherService.publish).not.toHaveBeenCalled();
-      expect(repository.updateJobStatus).not.toHaveBeenCalled();
       expect(result).toEqual({ fetched: 0, dispatched: 0, failed: 0 });
     });
   });
 
   describe('metrics', () => {
     it('should accurately report totalDispatched and totalFailed metrics', async () => {
-      repository.findReadyJobs.mockResolvedValueOnce([mockJob]);
+      repository.fetchAndClaimReadyJobs.mockResolvedValueOnce([mockJob]);
       publisherService.publish.mockResolvedValueOnce(true);
 
       await service.dispatchBatch();

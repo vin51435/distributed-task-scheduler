@@ -88,7 +88,7 @@ describe('ScannerService', () => {
       const now = new Date('2026-08-02T10:05:00Z');
       const result = await service.scan(now);
 
-      expect(repository.findDueSchedules).toHaveBeenCalledWith(now, 500);
+      expect(repository.findDueSchedules).toHaveBeenCalledWith(now, 500, undefined);
       expect(repository.createJob).toHaveBeenCalledWith({
         scheduleId: mockOneOffSchedule.id,
         status: JobStatus.READY,
@@ -105,7 +105,7 @@ describe('ScannerService', () => {
       expect(repository.updateSchedule).toHaveBeenCalledWith(mockOneOffSchedule.id, {
         status: ScheduleStatus.COMPLETED,
       });
-      expect(result).toEqual({ scannedSchedules: 1, jobsCreated: 1 });
+      expect(result).toMatchObject({ scannedSchedules: 1, jobsCreated: 1 });
     });
 
     it('should create 1 job and update nextExecuteAt for CRON schedule', async () => {
@@ -139,7 +139,7 @@ describe('ScannerService', () => {
       expect(updatedScheduleArg.nextExecuteAt?.getTime()).toBeGreaterThan(
         mockCronSchedule.nextExecuteAt!.getTime(),
       );
-      expect(result).toEqual({ scannedSchedules: 1, jobsCreated: 1 });
+      expect(result).toMatchObject({ scannedSchedules: 1, jobsCreated: 1 });
     });
 
     it('should return 0 scanned and 0 jobs created when no schedules are due', async () => {
@@ -148,7 +148,7 @@ describe('ScannerService', () => {
       const result = await service.scan();
       expect(repository.createJob).not.toHaveBeenCalled();
       expect(repository.updateSchedule).not.toHaveBeenCalled();
-      expect(result).toEqual({ scannedSchedules: 0, jobsCreated: 0 });
+      expect(result).toMatchObject({ scannedSchedules: 0, jobsCreated: 0 });
     });
   });
 

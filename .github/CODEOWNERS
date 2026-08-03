@@ -1,0 +1,18 @@
+# Global repository code owners
+* @vin51435
+
+# Microservice Applications
+/apps/scheduler/ @vin51435
+/apps/scanner/ @vin51435
+/apps/dispatcher/ @vin51435
+/apps/worker/ @vin51435
+
+# Shared Platform Packages
+/packages/database/ @vin51435
+/packages/redis/ @vin51435
+/packages/rabbitmq/ @vin51435
+/packages/config/ @vin51435
+/packages/logger/ @vin51435
+
+# CI/CD & Configuration
+/.github/ @vin51435
