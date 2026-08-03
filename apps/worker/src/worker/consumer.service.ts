@@ -1,7 +1,9 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Optional } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { ConnectionService, PublisherService, WORKER_QUEUE_CONFIGS } from '@scheduler/rabbitmq';
 import { JobStatus, RetryPolicy } from '@scheduler/database';
 import { calculateNextRetryAt, isRetryableError } from '@scheduler/errors';
+import { IdempotencyService, HeartbeatService, RateLimiterService } from '@scheduler/redis';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
 import { HandlerRegistry } from './handler.registry';
 import { ExecutionService } from './execution.service';
@@ -21,12 +23,16 @@ export interface JobMessageEnvelope {
 export class ConsumerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ConsumerService.name);
   private isShuttingDown = false;
+  private readonly instanceId = `worker-${randomUUID()}`;
 
   constructor(
     private readonly connectionService: ConnectionService,
     private readonly publisherService: PublisherService,
     private readonly handlerRegistry: HandlerRegistry,
     private readonly executionService: ExecutionService,
+    @Optional() private readonly idempotencyService?: IdempotencyService,
+    @Optional() private readonly heartbeatService?: HeartbeatService,
+    @Optional() private readonly rateLimiterService?: RateLimiterService,
   ) {}
 
   onModuleInit() {
@@ -36,7 +42,7 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
   async onModuleDestroy() {
     this.isShuttingDown = true;
     this.logger.log(
-      'Graceful shutdown initiated. Waiting for in-flight job executions to complete...',
+      `Worker [${this.instanceId}] graceful shutdown initiated. Waiting for in-flight job executions to complete...`,
     );
 
     const startTime = Date.now();
@@ -60,22 +66,19 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
 
     channelWrapper.addSetup(async (channel: ConfirmChannel) => {
       const exchangeName = process.env.RABBITMQ_EXCHANGE || 'scheduler.exchange';
-
       const queueConfigs = WORKER_QUEUE_CONFIGS;
 
       await channel.assertExchange(exchangeName, 'direct', { durable: true });
 
       for (const config of queueConfigs) {
-        // Assert primary queue and bind to exchange
         await channel.assertQueue(config.name, { durable: true });
         await channel.bindQueue(config.name, exchangeName, config.routingKey);
 
-        // Assert Dead Letter Queue (DLQ) and bind to exchange
         await channel.assertQueue(config.dlqName, { durable: true });
         await channel.bindQueue(config.dlqName, exchangeName, config.dlqName);
 
         this.logger.log(
-          `Subscribing consumer to queue '${config.name}' (DLQ: '${config.dlqName}') bound to exchange '${exchangeName}' with routingKey '${config.routingKey}'`,
+          `Worker [${this.instanceId}] consuming queue '${config.name}' (DLQ: '${config.dlqName}') bound to exchange '${exchangeName}' with routingKey '${config.routingKey}'`,
         );
 
         await channel.consume(config.name, async (msg: ConsumeMessage | null) => {
@@ -136,9 +139,49 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
     }
 
     const workerType = envelope.workerType || 'EMAIL';
-    this.logger.log(`Received message for Job ${envelope.jobId} (workerType: '${workerType}')`);
+    this.logger.log(
+      `Worker [${this.instanceId}] received message for Job ${envelope.jobId} (workerType: '${workerType}')`,
+    );
 
-    // 2. Idempotency Check & Status Validation
+    // 2. Redis Fast Idempotency Check
+    if (this.idempotencyService) {
+      const isFirstTime = await this.idempotencyService.checkAndSet(
+        `idempotency:worker:${envelope.jobId}`,
+        86400,
+      );
+      if (!isFirstTime) {
+        this.logger.warn(
+          `Idempotency Guard (Redis): Job ${envelope.jobId} already executed by a worker. Skipping duplicate execution.`,
+        );
+        channel.ack(msg);
+        return;
+      }
+    }
+
+    // 3. Rate Limiting Check
+    if (this.rateLimiterService) {
+      const limit = workerType === 'EMAIL' ? 100 : workerType === 'WEBHOOK' ? 20 : 200;
+      const fillRate = limit;
+      const rateCheck = await this.rateLimiterService.consumeToken(
+        `ratelimit:${workerType.toLowerCase()}`,
+        limit,
+        fillRate,
+      );
+
+      if (!rateCheck.allowed) {
+        this.logger.warn(
+          `Rate Limiter Guard: Rate limit exceeded for workerType '${workerType}'. Requeuing Job ${envelope.jobId}.`,
+        );
+        // Clear Redis idempotency key so requeued attempt can process later
+        if (this.idempotencyService) {
+          await this.idempotencyService.clear(`idempotency:worker:${envelope.jobId}`);
+        }
+        channel.nack(msg, false, true);
+        return;
+      }
+    }
+
+    // 4. DB Status Validation & Idempotency
     const existingJob = await this.executionService.findJobById(envelope.jobId);
     if (!existingJob) {
       this.logger.warn(`Job ${envelope.jobId} not found in database. Dropping message.`);
@@ -152,13 +195,13 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
       existingJob.status === JobStatus.DEAD
     ) {
       this.logger.warn(
-        `Idempotency Guard: Job ${envelope.jobId} is currently in '${existingJob.status}' state. Skipping duplicate execution.`,
+        `Idempotency Guard (DB): Job ${envelope.jobId} is currently in '${existingJob.status}' state. Skipping duplicate execution.`,
       );
       channel.ack(msg);
       return;
     }
 
-    // 3. Start Execution Record
+    // 5. Start Execution Record
     let execution;
     try {
       execution = await this.executionService.startExecution(envelope.jobId);
@@ -166,15 +209,31 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(
         `Failed to start execution record for job ${envelope.jobId}: ${err.message}`,
       );
+      if (this.idempotencyService) {
+        await this.idempotencyService.clear(`idempotency:worker:${envelope.jobId}`);
+      }
       channel.nack(msg, false, false);
       return;
+    }
+
+    // 6. Start Heartbeat Timer
+    let heartbeatTimer: NodeJS.Timeout | null = null;
+    const heartbeatKey = `worker:job:${envelope.jobId}`;
+
+    if (this.heartbeatService) {
+      await this.heartbeatService.sendHeartbeat(heartbeatKey, this.instanceId, 15000);
+      heartbeatTimer = setInterval(async () => {
+        if (this.heartbeatService) {
+          await this.heartbeatService.sendHeartbeat(heartbeatKey, this.instanceId, 15000);
+        }
+      }, 5000);
     }
 
     const currentAttempt = (existingJob.attempt || 0) + 1;
     const maxAttempts = existingJob.maxAttempts || 5;
     const retryPolicy = existingJob.retryPolicy || RetryPolicy.EXPONENTIAL_BACKOFF;
 
-    // 4. Run Job Handler Execution
+    // 7. Run Job Handler Execution
     try {
       const handler = this.handlerRegistry.getHandler(workerType);
       await handler.execute(envelope.payload || {});
@@ -232,7 +291,19 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
           'RETRYABLE_ERROR',
         );
 
+        // Clear Redis idempotency key so retry attempt can execute later
+        if (this.idempotencyService) {
+          await this.idempotencyService.clear(`idempotency:worker:${envelope.jobId}`);
+        }
+
         channel.ack(msg);
+      }
+    } finally {
+      if (heartbeatTimer) {
+        clearInterval(heartbeatTimer);
+      }
+      if (this.heartbeatService) {
+        await this.heartbeatService.clearHeartbeat(heartbeatKey);
       }
     }
   }
