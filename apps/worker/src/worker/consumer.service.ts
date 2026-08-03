@@ -62,32 +62,36 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
   }
 
   public startConsuming() {
-    const channelWrapper = this.connectionService.getChannelWrapper();
+    try {
+      const channelWrapper = this.connectionService.getChannelWrapper();
 
-    channelWrapper.addSetup(async (channel: ConfirmChannel) => {
-      const exchangeName = process.env.RABBITMQ_EXCHANGE || 'scheduler.exchange';
-      const queueConfigs = WORKER_QUEUE_CONFIGS;
+      channelWrapper.addSetup(async (channel: ConfirmChannel) => {
+        const exchangeName = process.env.RABBITMQ_EXCHANGE || 'scheduler.exchange';
+        const queueConfigs = WORKER_QUEUE_CONFIGS;
 
-      await channel.assertExchange(exchangeName, 'direct', { durable: true });
+        await channel.assertExchange(exchangeName, 'direct', { durable: true });
 
-      for (const config of queueConfigs) {
-        await channel.assertQueue(config.name, { durable: true });
-        await channel.bindQueue(config.name, exchangeName, config.routingKey);
+        for (const config of queueConfigs) {
+          await channel.assertQueue(config.name, { durable: true });
+          await channel.bindQueue(config.name, exchangeName, config.routingKey);
 
-        await channel.assertQueue(config.dlqName, { durable: true });
-        await channel.bindQueue(config.dlqName, exchangeName, config.dlqName);
+          await channel.assertQueue(config.dlqName, { durable: true });
+          await channel.bindQueue(config.dlqName, exchangeName, config.dlqName);
 
-        this.logger.log(
-          `Worker [${this.instanceId}] consuming queue '${config.name}' (DLQ: '${config.dlqName}') bound to exchange '${exchangeName}' with routingKey '${config.routingKey}'`,
-        );
+          this.logger.log(
+            `Worker [${this.instanceId}] consuming queue '${config.name}' (DLQ: '${config.dlqName}') bound to exchange '${exchangeName}' with routingKey '${config.routingKey}'`,
+          );
 
-        await channel.consume(config.name, async (msg: ConsumeMessage | null) => {
-          if (msg) {
-            await this.processMessage(channel, msg, config.dlqName, exchangeName);
-          }
-        });
-      }
-    });
+          await channel.consume(config.name, async (msg: ConsumeMessage | null) => {
+            if (msg) {
+              await this.processMessage(channel, msg, config.dlqName, exchangeName);
+            }
+          });
+        }
+      });
+    } catch (err: any) {
+      this.logger.error(`Failed to initialize worker consumer: ${err.message}`, err.stack);
+    }
   }
 
   public async processMessage(
@@ -143,45 +147,7 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
       `Worker [${this.instanceId}] received message for Job ${envelope.jobId} (workerType: '${workerType}')`,
     );
 
-    // 2. Redis Fast Idempotency Check
-    if (this.idempotencyService) {
-      const isFirstTime = await this.idempotencyService.checkAndSet(
-        `idempotency:worker:${envelope.jobId}`,
-        86400,
-      );
-      if (!isFirstTime) {
-        this.logger.warn(
-          `Idempotency Guard (Redis): Job ${envelope.jobId} already executed by a worker. Skipping duplicate execution.`,
-        );
-        channel.ack(msg);
-        return;
-      }
-    }
-
-    // 3. Rate Limiting Check
-    if (this.rateLimiterService) {
-      const limit = workerType === 'EMAIL' ? 100 : workerType === 'WEBHOOK' ? 20 : 200;
-      const fillRate = limit;
-      const rateCheck = await this.rateLimiterService.consumeToken(
-        `ratelimit:${workerType.toLowerCase()}`,
-        limit,
-        fillRate,
-      );
-
-      if (!rateCheck.allowed) {
-        this.logger.warn(
-          `Rate Limiter Guard: Rate limit exceeded for workerType '${workerType}'. Requeuing Job ${envelope.jobId}.`,
-        );
-        // Clear Redis idempotency key so requeued attempt can process later
-        if (this.idempotencyService) {
-          await this.idempotencyService.clear(`idempotency:worker:${envelope.jobId}`);
-        }
-        channel.nack(msg, false, true);
-        return;
-      }
-    }
-
-    // 4. DB Status Validation & Idempotency
+    // 2. DB Status Validation & Idempotency Check
     const existingJob = await this.executionService.findJobById(envelope.jobId);
     if (!existingJob) {
       this.logger.warn(`Job ${envelope.jobId} not found in database. Dropping message.`);
@@ -199,6 +165,33 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
       );
       channel.ack(msg);
       return;
+    }
+
+    // 3. Redis Fast Idempotency Check
+    if (this.idempotencyService) {
+      await this.idempotencyService.checkAndSet(`idempotency:worker:${envelope.jobId}`, 86400);
+    }
+
+    // 4. Rate Limiting Check
+    if (this.rateLimiterService) {
+      const limit = workerType === 'EMAIL' ? 100 : workerType === 'WEBHOOK' ? 20 : 200;
+      const fillRate = limit;
+      const rateCheck = await this.rateLimiterService.consumeToken(
+        `ratelimit:${workerType.toLowerCase()}`,
+        limit,
+        fillRate,
+      );
+
+      if (!rateCheck.allowed) {
+        this.logger.warn(
+          `Rate Limiter Guard: Rate limit exceeded for workerType '${workerType}'. Requeuing Job ${envelope.jobId}.`,
+        );
+        if (this.idempotencyService) {
+          await this.idempotencyService.clear(`idempotency:worker:${envelope.jobId}`);
+        }
+        channel.nack(msg, false, true);
+        return;
+      }
     }
 
     // 5. Start Execution Record
