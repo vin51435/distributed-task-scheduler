@@ -93,6 +93,7 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await this.dispatchBatch();
+      await this.recoverStuckJobs();
     } catch (err: any) {
       this.logger.error(`Error during dispatcher automated loop: ${err.message}`, err.stack);
     } finally {
@@ -171,6 +172,27 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
       };
     } finally {
       this.isDispatching = false;
+    }
+  }
+
+  public async recoverStuckJobs(visibilityTimeoutMs = 60000): Promise<number> {
+    try {
+      const stuckJobs = await this.repository.findStuckJobs(visibilityTimeoutMs);
+      if (stuckJobs.length > 0) {
+        this.logger.warn(
+          `Found ${stuckJobs.length} stuck job(s) past visibility timeout. Recovering to READY state...`,
+        );
+        for (const job of stuckJobs) {
+          await this.repository.recoverStuckJob(
+            job.id,
+            `Visibility timeout (${visibilityTimeoutMs}ms) expired for job status ${job.status}`,
+          );
+        }
+      }
+      return stuckJobs.length;
+    } catch (err: any) {
+      this.logger.error(`Error recovering stuck jobs: ${err.message}`, err.stack);
+      return 0;
     }
   }
 

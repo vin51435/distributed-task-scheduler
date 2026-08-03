@@ -113,6 +113,8 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
             executeAt: executeAtTime,
             payload: schedule.payload,
             attempt: 0,
+            maxAttempts: schedule.maxAttempts || 5,
+            retryPolicy: schedule.retryPolicy,
             workerType: schedule.workerType,
             routingKey:
               schedule.routingKey ||

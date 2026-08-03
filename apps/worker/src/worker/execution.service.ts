@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ExecutionEntity, ExecutionStatus, JobStatus } from '@scheduler/database';
+import { ExecutionEntity, ExecutionStatus, JobEntity, JobStatus } from '@scheduler/database';
 import { ExecutionRepository } from './execution.repository';
 
 export interface WorkerExecutionMetrics {
@@ -53,14 +53,85 @@ export class ExecutionService {
   }
 
   /**
-   * Marks execution and job as FAILED when handler execution fails.
+   * Marks execution as FAILED and schedules Job for retry at nextRetryAt.
    */
-  async failExecution(executionId: string, jobId: string, errorMessage: string): Promise<void> {
+  async failExecutionWithRetry(
+    executionId: string,
+    jobId: string,
+    attempt: number,
+    nextRetryAt: Date,
+    errorMessage: string,
+    stackTrace?: string,
+    failureReason = 'RETRYABLE_ERROR',
+  ): Promise<void> {
     await this.repository.updateExecutionStatus(
       executionId,
       ExecutionStatus.FAILED,
       new Date(),
       errorMessage,
+      stackTrace,
+    );
+    await this.repository.updateJobForRetry(
+      jobId,
+      nextRetryAt,
+      attempt,
+      errorMessage,
+      failureReason,
+    );
+
+    this.totalProcessed++;
+    this.totalFailed++;
+    if (this.activeExecutions > 0) this.activeExecutions--;
+
+    this.logger.warn(
+      `Execution ${executionId} failed for Job ${jobId} (attempt ${attempt}). Retrying at ${nextRetryAt.toISOString()}: ${errorMessage}`,
+    );
+  }
+
+  /**
+   * Marks execution as FAILED and transitions Job status to DEAD (DLQ).
+   */
+  async failExecutionDead(
+    executionId: string,
+    jobId: string,
+    attempt: number,
+    errorMessage: string,
+    stackTrace?: string,
+    failureReason = 'EXHAUSTED_RETRIES',
+  ): Promise<void> {
+    await this.repository.updateExecutionStatus(
+      executionId,
+      ExecutionStatus.FAILED,
+      new Date(),
+      errorMessage,
+      stackTrace,
+    );
+    await this.repository.updateJobDead(jobId, attempt, errorMessage, failureReason);
+
+    this.totalProcessed++;
+    this.totalFailed++;
+    if (this.activeExecutions > 0) this.activeExecutions--;
+
+    this.logger.error(
+      `Execution ${executionId} permanently failed for Job ${jobId}. Transitioned to DEAD (${failureReason}): ${errorMessage}`,
+    );
+  }
+
+  /**
+   * Marks execution and job as FAILED when handler execution fails (fallback).
+   */
+  async failExecution(
+    executionId: string,
+    jobId: string,
+    errorMessage: string,
+    stackTrace?: string,
+  ): Promise<void> {
+    await this.repository.updateExecutionStatus(
+      executionId,
+      ExecutionStatus.FAILED,
+      new Date(),
+      errorMessage,
+      stackTrace,
     );
     await this.repository.updateJobStatus(jobId, JobStatus.FAILED);
 
@@ -69,6 +140,14 @@ export class ExecutionService {
     if (this.activeExecutions > 0) this.activeExecutions--;
 
     this.logger.error(`Execution ${executionId} and Job ${jobId} failed: ${errorMessage}`);
+  }
+
+  async findJobById(jobId: string): Promise<JobEntity | null> {
+    return this.repository.findJobById(jobId);
+  }
+
+  async updateJobHeartbeat(jobId: string): Promise<void> {
+    await this.repository.updateJobHeartbeat(jobId);
   }
 
   /**

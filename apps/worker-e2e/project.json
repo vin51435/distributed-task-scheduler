@@ -7,7 +7,7 @@
     "e2e": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
-      "dependsOn": ["worker:build", "worker:serve"],
+      "dependsOn": ["worker:build"],
       "options": {
         "jestConfig": "apps/worker-e2e/jest.config.ts",
         "passWithNoTests": true

@@ -5,9 +5,6 @@ module.exports = {
   output: {
     path: join(__dirname, '../../dist/apps/scheduler'),
     clean: true,
-    ...(process.env.NODE_ENV !== 'production' && {
-      devtoolModuleFilenameTemplate: '[absolute-resource-path]',
-    }),
   },
   plugins: [
     new NxAppWebpackPlugin({
@@ -20,6 +17,7 @@ module.exports = {
       outputHashing: 'none',
       generatePackageJson: true,
       sourceMap: true,
+      buildLibsFromSource: true,
     }),
   ],
 };

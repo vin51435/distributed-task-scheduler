@@ -31,6 +31,18 @@ export class ExecutionEntity extends BaseEntity {
   @Column({ type: 'text', nullable: true, name: 'error_message' })
   errorMessage?: string;
 
+  @Column({ type: 'text', nullable: true, name: 'stack_trace' })
+  stackTrace?: string;
+
+  @Column({ type: 'integer', nullable: true, name: 'duration' })
+  duration?: number;
+
+  @Column({ type: 'integer', nullable: true, name: 'exit_code' })
+  exitCode?: number;
+
+  @Column({ type: 'integer', default: 1, name: 'retry_number' })
+  retryNumber?: number;
+
   @Column({ type: 'varchar', length: 100, nullable: true, name: 'node_id' })
   nodeId?: string;
 }

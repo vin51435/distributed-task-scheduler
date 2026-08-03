@@ -7,6 +7,15 @@ export enum JobStatus {
   RUNNING = 'RUNNING',
   SUCCEEDED = 'SUCCEEDED',
   FAILED = 'FAILED',
+  DEAD = 'DEAD',
+}
+
+export enum RetryPolicy {
+  NONE = 'NONE',
+  FIXED_DELAY = 'FIXED_DELAY',
+  LINEAR_BACKOFF = 'LINEAR_BACKOFF',
+  EXPONENTIAL_BACKOFF = 'EXPONENTIAL_BACKOFF',
+  JITTER = 'JITTER',
 }
 
 @Entity({ name: 'jobs' })
@@ -25,6 +34,29 @@ export class JobEntity extends BaseEntity {
 
   @Column({ type: 'integer', default: 0 })
   attempt!: number;
+
+  @Column({ type: 'integer', default: 5, name: 'max_attempts' })
+  maxAttempts?: number;
+
+  @Column({
+    type: 'enum',
+    enum: RetryPolicy,
+    default: RetryPolicy.EXPONENTIAL_BACKOFF,
+    name: 'retry_policy',
+  })
+  retryPolicy?: RetryPolicy;
+
+  @Column({ type: 'timestamp with time zone', nullable: true, name: 'next_retry_at' })
+  nextRetryAt?: Date | null;
+
+  @Column({ type: 'text', nullable: true, name: 'last_error' })
+  lastError?: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'failure_reason' })
+  failureReason?: string | null;
+
+  @Column({ type: 'timestamp with time zone', nullable: true, name: 'last_heartbeat' })
+  lastHeartbeat?: Date | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true, name: 'worker_type' })
   workerType?: string;

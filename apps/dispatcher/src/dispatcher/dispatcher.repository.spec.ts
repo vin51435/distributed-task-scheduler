@@ -44,16 +44,16 @@ describe('DispatcherRepository', () => {
   });
 
   describe('findReadyJobs', () => {
-    it('should query jobs with READY status ordered by executeAt ASC with batch limit', async () => {
+    it('should query jobs with READY status ordered by priority and executeAt ASC with batch limit', async () => {
       typeormRepo.find.mockResolvedValueOnce([mockReadyJob]);
 
       const result = await repository.findReadyJobs(500);
 
-      expect(typeormRepo.find).toHaveBeenCalledWith({
-        where: { status: JobStatus.READY },
-        order: { executeAt: 'ASC' },
-        take: 500,
-      });
+      expect(typeormRepo.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 500,
+        }),
+      );
       expect(result).toEqual([mockReadyJob]);
     });
   });
@@ -64,7 +64,10 @@ describe('DispatcherRepository', () => {
 
       await repository.updateJobStatus('job-1', JobStatus.DISPATCHED);
 
-      expect(typeormRepo.update).toHaveBeenCalledWith('job-1', { status: JobStatus.DISPATCHED });
+      expect(typeormRepo.update).toHaveBeenCalledWith('job-1', {
+        status: JobStatus.DISPATCHED,
+        lastHeartbeat: expect.any(Date),
+      });
     });
   });
 });

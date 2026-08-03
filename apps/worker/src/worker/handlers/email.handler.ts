@@ -9,8 +9,25 @@ export class EmailHandler implements JobHandler {
   async execute(payload: Record<string, any>): Promise<void> {
     this.logger.log(`Starting EmailHandler execution for payload: ${JSON.stringify(payload)}`);
 
-    // Simulate work (e.g. sending SMTP email)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (payload?.delayMs) {
+      await new Promise((resolve) => setTimeout(resolve, Number(payload.delayMs)));
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    if (payload?.error === 'poison' || payload?.failType === 'poison') {
+      throw new Error('Poison message: invalid payload structure');
+    }
+
+    if (payload?.error === 'non_retryable' || payload?.failType === 'non_retryable') {
+      throw new Error('Bad email recipient address: 404 not found');
+    }
+
+    if (payload?.fail === true || payload?.error || payload?.shouldFail === true) {
+      throw new Error(
+        typeof payload.error === 'string' ? payload.error : 'Simulated network connection timeout',
+      );
+    }
 
     this.logger.log('Executed EmailHandler successfully');
   }

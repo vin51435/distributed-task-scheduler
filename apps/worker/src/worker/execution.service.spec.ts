@@ -80,6 +80,7 @@ describe('ExecutionService', () => {
         ExecutionStatus.FAILED,
         expect.any(Date),
         'Timeout error',
+        undefined,
       );
       expect(repository.updateJobStatus).toHaveBeenCalledWith('job-456', JobStatus.FAILED);
 

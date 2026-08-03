@@ -1,5 +1,8 @@
-/* eslint-disable */
-
 module.exports = async function () {
-  console.log((globalThis as any).__TEARDOWN_MESSAGE__ || '\nTearing down e2e tests...\n');
+  const child = (globalThis as any).__APP_CHILD_PROCESS__;
+  if (child) {
+    console.log('[scheduler-e2e] Stopping spawned server process...');
+    child.kill('SIGTERM');
+  }
+  console.log((globalThis as any).__TEARDOWN_MESSAGE__);
 };

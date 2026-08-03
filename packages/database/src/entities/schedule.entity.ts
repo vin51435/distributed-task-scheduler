@@ -1,5 +1,6 @@
 import { Column, Entity } from 'typeorm';
 import { BaseEntity } from '../base.entity';
+import { RetryPolicy } from './job.entity';
 
 export enum ScheduleType {
   CRON = 'CRON',
@@ -38,6 +39,17 @@ export class ScheduleEntity extends BaseEntity {
 
   @Column({ type: 'enum', enum: ScheduleStatus, default: ScheduleStatus.ACTIVE })
   status!: ScheduleStatus;
+
+  @Column({ type: 'integer', default: 5, name: 'max_attempts' })
+  maxAttempts?: number;
+
+  @Column({
+    type: 'enum',
+    enum: RetryPolicy,
+    default: RetryPolicy.EXPONENTIAL_BACKOFF,
+    name: 'retry_policy',
+  })
+  retryPolicy?: RetryPolicy;
 
   @Column({ type: 'varchar', length: 100, nullable: true, name: 'worker_type' })
   workerType?: string;

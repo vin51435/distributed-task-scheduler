@@ -7,7 +7,7 @@
     "e2e": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
-      "dependsOn": ["scheduler:build", "scheduler:serve"],
+      "dependsOn": ["scheduler:build"],
       "options": {
         "jestConfig": "apps/scheduler-e2e/jest.config.ts",
         "passWithNoTests": true

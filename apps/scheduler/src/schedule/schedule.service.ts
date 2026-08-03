@@ -35,6 +35,12 @@ export class ScheduleService {
       timezone,
       payload: dto.payload,
       status: dto.status ?? ScheduleStatus.ACTIVE,
+      workerType: dto.workerType,
+      routingKey: dto.routingKey,
+      priority: dto.priority,
+      tenantId: dto.tenantId,
+      maxAttempts: dto.maxAttempts,
+      retryPolicy: dto.retryPolicy,
     });
   }
 

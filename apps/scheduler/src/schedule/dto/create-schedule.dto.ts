@@ -3,6 +3,7 @@ import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, IsDateString } from
 import { ScheduleStatus, ScheduleType } from '../entities/schedule.entity';
 import { IsValidCron } from '../validators/cron.validator';
 import { IsValidTimezone } from '../validators/timezone.validator';
+import { RetryPolicy } from '@scheduler-platform/database';
 
 export class CreateScheduleDto {
   @ApiProperty({ description: 'Schedule name', example: 'Daily Cleanup Job' })
@@ -83,4 +84,16 @@ export class CreateScheduleDto {
   @IsOptional()
   @IsString()
   tenantId?: string;
+
+  @ApiPropertyOptional({ description: 'Maximum execution retry attempts', example: 5, default: 5 })
+  @IsOptional()
+  maxAttempts?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Retry backoff policy (NONE, FIXED_DELAY, LINEAR_BACKOFF, EXPONENTIAL_BACKOFF, JITTER)',
+    example: 'EXPONENTIAL_BACKOFF',
+  })
+  @IsOptional()
+  retryPolicy?: RetryPolicy;
 }

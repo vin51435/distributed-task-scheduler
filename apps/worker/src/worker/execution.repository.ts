@@ -24,6 +24,7 @@ export class ExecutionRepository {
     const execution = this.executionRepo.create({
       jobId,
       attemptNumber,
+      retryNumber: attemptNumber,
       status: ExecutionStatus.RUNNING,
       startedAt: new Date(),
       nodeId: nodeId || process.env.HOSTNAME || 'worker-1',
@@ -34,13 +35,22 @@ export class ExecutionRepository {
   async updateExecutionStatus(
     executionId: string,
     status: ExecutionStatus,
-    finishedAt?: Date,
+    finishedAt: Date = new Date(),
     errorMessage?: string,
+    stackTrace?: string,
   ): Promise<void> {
+    const execution = await this.executionRepo.findOne({ where: { id: executionId } });
+    const startedAt = execution?.startedAt || finishedAt;
+    const duration = Math.max(0, finishedAt.getTime() - startedAt.getTime());
+    const exitCode = status === ExecutionStatus.SUCCEEDED ? 0 : 1;
+
     await this.executionRepo.update(executionId, {
       status,
-      finishedAt: finishedAt || new Date(),
+      finishedAt,
+      duration,
+      exitCode,
       ...(errorMessage ? { errorMessage } : {}),
+      ...(stackTrace ? { stackTrace } : {}),
     });
   }
 
@@ -49,10 +59,46 @@ export class ExecutionRepository {
   }
 
   async updateJobStatus(jobId: string, status: JobStatus, attempt?: number): Promise<void> {
-    const updatePayload: Partial<JobEntity> = { status };
+    const updatePayload: Partial<JobEntity> = { status, lastHeartbeat: new Date() };
     if (attempt !== undefined) {
       updatePayload.attempt = attempt;
     }
     await this.jobRepo.update(jobId, updatePayload);
+  }
+
+  async updateJobHeartbeat(jobId: string): Promise<void> {
+    await this.jobRepo.update(jobId, { lastHeartbeat: new Date() });
+  }
+
+  async updateJobForRetry(
+    jobId: string,
+    nextRetryAt: Date,
+    attempt: number,
+    lastError: string,
+    failureReason = 'RETRYABLE_ERROR',
+  ): Promise<void> {
+    await this.jobRepo.update(jobId, {
+      status: JobStatus.READY,
+      nextRetryAt,
+      attempt,
+      lastError,
+      failureReason,
+      lastHeartbeat: null,
+    });
+  }
+
+  async updateJobDead(
+    jobId: string,
+    attempt: number,
+    lastError: string,
+    failureReason = 'EXHAUSTED_RETRIES',
+  ): Promise<void> {
+    await this.jobRepo.update(jobId, {
+      status: JobStatus.DEAD,
+      attempt,
+      lastError,
+      failureReason,
+      lastHeartbeat: null,
+    });
   }
 }
