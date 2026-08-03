@@ -34,7 +34,7 @@ export class HandlerRegistry {
    */
   public getHandler(type: string): JobHandler {
     if (!type) {
-      throw new Error('Worker type must be provided');
+      return this.noopHandler;
     }
 
     let normalizedKey = type.trim().toUpperCase();
@@ -44,7 +44,10 @@ export class HandlerRegistry {
 
     const handler = this.handlers.get(normalizedKey);
     if (!handler) {
-      throw new Error(`No handler registered for worker type '${type}'`);
+      this.logger.warn(
+        `No handler registered for worker type '${type}', defaulting to NoopHandler`,
+      );
+      return this.noopHandler;
     }
 
     return handler;

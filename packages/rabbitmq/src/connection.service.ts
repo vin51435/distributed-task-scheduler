@@ -72,9 +72,9 @@ export class ConnectionService implements OnModuleInit, OnModuleDestroy {
 
   public getChannelWrapper(): ChannelWrapper {
     if (!this.confirmChannelWrapper) {
-      throw new Error('RabbitMQ confirm channel wrapper is not initialized');
+      this.connect();
     }
-    return this.confirmChannelWrapper;
+    return this.confirmChannelWrapper!;
   }
 
   public getIsConnected(): boolean {

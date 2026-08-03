@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Optional } from '@ne
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { JobStatus } from '@scheduler/database';
-import { PublisherService } from '@scheduler/rabbitmq';
+import { PublisherService, WORKER_QUEUE_CONFIGS } from '@scheduler/rabbitmq';
 import { LockService, IdempotencyService, HeartbeatService } from '@scheduler/redis';
 import { DispatcherRepository } from './dispatcher.repository';
 
@@ -143,6 +143,11 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
       }
 
       for (const job of readyJobs) {
+        if (!job || !job.id) {
+          this.logger.warn('Claimed job missing id property. Skipping dispatch batch item.');
+          continue;
+        }
+
         // 1. Idempotency pre-check
         if (this.idempotencyService) {
           const isFirstTime = await this.idempotencyService.checkAndSet(
@@ -171,9 +176,19 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
         }
 
         try {
-          const effectiveRoutingKey =
-            job.routingKey ||
-            (job.workerType ? `worker.${job.workerType.toLowerCase()}` : this.routingKey);
+          const knownWorkerRoutingKeys: string[] = WORKER_QUEUE_CONFIGS.map((c) => c.routingKey);
+          let effectiveRoutingKey = job.routingKey;
+
+          if (!effectiveRoutingKey && job.workerType) {
+            const candidateKey = `worker.${job.workerType.toLowerCase()}`;
+            if (knownWorkerRoutingKeys.includes(candidateKey)) {
+              effectiveRoutingKey = candidateKey;
+            }
+          }
+
+          if (!effectiveRoutingKey) {
+            effectiveRoutingKey = this.routingKey;
+          }
 
           const payloadEnvelope = {
             jobId: job.id,
