@@ -4,6 +4,7 @@ import { AppConfigModule, appConfigSchema } from '@scheduler/config';
 import { AppLoggerModule } from '@scheduler/logger';
 import { DatabaseModule, ScheduleEntity, JobEntity, ExecutionEntity } from '@scheduler/database';
 import { RabbitMQModule } from '@scheduler/rabbitmq';
+import { RedisModule } from '@scheduler/redis';
 import { DispatcherModule } from './dispatcher/dispatcher.module';
 import { HealthModule } from './health/health.module';
 
@@ -23,6 +24,7 @@ import { HealthModule } from './health/health.module';
         routingKey: configService.get<string>('RABBITMQ_ROUTING_KEY') || 'job.execute',
       }),
     }),
+    RedisModule,
     DispatcherModule,
     HealthModule,
   ],
