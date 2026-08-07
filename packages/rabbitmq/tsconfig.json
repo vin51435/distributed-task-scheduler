@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
+    "outDir": "../../dist/packages/rabbitmq",
     "rootDir": "./src",
     "composite": true,
     "declaration": true,
