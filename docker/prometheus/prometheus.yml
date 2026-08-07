@@ -1,13 +1,39 @@
 global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+rule_files:
+  - 'alerts.yml'
 
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
-  - job_name: 'scheduler-services'
-    scrape_interval: 5s
+  - job_name: 'scheduler'
+    metrics_path: '/api/metrics'
     static_configs:
-      - targets: ['host.docker.internal:9100']
+      - targets: ['host.docker.internal:3001']
+
+  - job_name: 'scanner'
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3002']
+
+  - job_name: 'dispatcher'
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3003']
+
+  - job_name: 'worker'
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3004']
+
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq_exporter:9419']
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres_exporter:9187']

@@ -2,9 +2,16 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppConfigModule, appConfigSchema } from '@scheduler/config';
 import { AppLoggerModule } from '@scheduler/logger';
-import { DatabaseModule, ScheduleEntity, JobEntity, ExecutionEntity } from '@scheduler/database';
+import {
+  DatabaseModule,
+  ScheduleEntity,
+  JobEntity,
+  ExecutionEntity,
+  JobAuditEntity,
+} from '@scheduler/database';
 import { RabbitMQModule } from '@scheduler/rabbitmq';
 import { RedisModule } from '@scheduler/redis';
+import { MetricsModule } from '@scheduler-platform/metrics';
 import { DispatcherModule } from './dispatcher/dispatcher.module';
 import { HealthModule } from './health/health.module';
 
@@ -13,7 +20,7 @@ import { HealthModule } from './health/health.module';
     AppConfigModule.forRoot(appConfigSchema),
     AppLoggerModule.forRoot({ serviceName: 'dispatcher-service' }),
     DatabaseModule.forRoot({
-      entities: [ScheduleEntity, JobEntity, ExecutionEntity],
+      entities: [ScheduleEntity, JobEntity, ExecutionEntity, JobAuditEntity],
     }),
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
@@ -25,6 +32,7 @@ import { HealthModule } from './health/health.module';
       }),
     }),
     RedisModule,
+    MetricsModule,
     DispatcherModule,
     HealthModule,
   ],

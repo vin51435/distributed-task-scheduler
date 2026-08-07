@@ -1,4 +1,4 @@
-﻿# Chapter 18 — Dispatcher Service & Execution Dispatch Pipeline
+# Chapter 18 — Dispatcher Service & Execution Dispatch Pipeline
 
 **Document:** Distributed Task Scheduler Platform
 **Chapter:** 18
@@ -291,35 +291,25 @@ Database state changes only after RabbitMQ confirms successful receipt.
 
 Duplicate publication must never result in duplicate execution.
 
-The Dispatcher assigns every message a unique identifier.
+The Dispatcher achieves **exactly-once job claiming** across multiple concurrent Dispatcher instances via **PostgreSQL `FOR UPDATE SKIP LOCKED` atomic SQL queries**.
 
-```text
-job_456
-
-↓
-
-messageId
-
-↓
-
-msg_987
+```sql
+UPDATE jobs
+SET status = 'DISPATCHED', last_heartbeat = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+WHERE id IN (
+  SELECT id FROM jobs
+  WHERE (status = 'READY' AND execute_at <= CURRENT_TIMESTAMP)
+     OR (status = 'DISPATCHED' AND (last_heartbeat IS NULL OR last_heartbeat <= CURRENT_TIMESTAMP - INTERVAL '15 seconds'))
+  ORDER BY priority DESC, execute_at ASC
+  FOR UPDATE SKIP LOCKED
+  LIMIT 500
+)
+RETURNING *;
 ```
 
-If publication is attempted twice:
+PostgreSQL row-level locking guarantees that Node A and Node B will never claim or publish the same job row simultaneously. Stale dispatched jobs past visibility timeout are automatically re-claimed without memory bloat or race conditions.
 
-```text
-Duplicate Message
-
-↓
-
-Already Published
-
-↓
-
-Ignore
-```
-
-Workers also verify idempotency before execution.
+Workers also verify idempotency before execution via DB status validation and downstream `Idempotency-Key` headers.
 
 ---
 

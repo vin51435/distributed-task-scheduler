@@ -1,0 +1,47 @@
+groups:
+  - name: scheduler_alerts
+    rules:
+      - alert: RabbitMQQueueHigh
+        expr: rabbitmq_queue_messages > 50000
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'RabbitMQ Queue depth high'
+          description: 'Queue depth is above 50,000 messages (current value: {{ $value }}).'
+
+      - alert: WorkerHighFailureRate
+        expr: (sum(rate(worker_failure_total[5m])) / (sum(rate(worker_success_total[5m])) + sum(rate(worker_failure_total[5m])))) * 100 > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High worker execution failure rate'
+          description: 'Worker failure rate exceeds 10% over the last 5 minutes (current rate: {{ $value }}%).'
+
+      - alert: ScannerStalled
+        expr: rate(scanner_scan_duration_seconds_count[30s]) == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Scanner stalled'
+          description: 'No scanner scan execution detected in the last 30 seconds.'
+
+      - alert: DispatcherBacklog
+        expr: rate(dispatcher_publish_failures_total[5m]) > 0 or (rate(dispatcher_publish_total[5m]) == 0 and dispatcher_batch_size > 0)
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Dispatcher job publishing backlog or failure'
+          description: 'Dispatcher is failing to publish READY jobs or encountering backlog.'
+
+      - alert: RedisLeaderMissing
+        expr: scanner_bucket_ownership == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Redis bucket leader missing'
+          description: 'No scanner node owns leader buckets.'

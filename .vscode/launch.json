@@ -8,7 +8,7 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "preLaunchTask": "Start Infrastructure (Docker)",
-      // "postDebugTask": "Stop Infrastructure (Docker)",
+      "postDebugTask": "Stop Infrastructure (Docker)",
       "console": "integratedTerminal"
     }
   ]

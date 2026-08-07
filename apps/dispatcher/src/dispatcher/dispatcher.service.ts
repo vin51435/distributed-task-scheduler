@@ -222,10 +222,6 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
             `Failed to publish job ${job.id} to RabbitMQ. Error: ${err.message}`,
             err.stack,
           );
-        } finally {
-          if (this.lockService && lockToken) {
-            await this.lockService.releaseLock(lockKey, lockToken);
-          }
         }
       }
 
@@ -247,34 +243,11 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
 
   public async recoverStuckJobs(visibilityTimeoutMs = 60000): Promise<number> {
     try {
-      const stuckJobs = await this.repository.findStuckJobs(visibilityTimeoutMs);
-      let recoveredCount = 0;
-
-      if (stuckJobs.length > 0) {
+      const recoveredCount = await this.repository.recoverStuckJobsBulk(visibilityTimeoutMs);
+      if (recoveredCount > 0) {
         this.logger.warn(
-          `Found ${stuckJobs.length} stuck job(s) past visibility timeout. Checking worker heartbeats...`,
+          `Dispatcher [${this.instanceId}] atomically recovered ${recoveredCount} stuck job(s) past visibility timeout`,
         );
-
-        for (const job of stuckJobs) {
-          // If Redis heartbeat service is available and job is RUNNING, check worker heartbeat
-          if (this.heartbeatService && job.status === JobStatus.RUNNING) {
-            const hasActiveWorkerHeartbeat = await this.heartbeatService.isAlive(
-              `worker:job:${job.id}`,
-            );
-            if (hasActiveWorkerHeartbeat) {
-              this.logger.log(
-                `Job ${job.id} is still actively emitting worker heartbeat 'worker:job:${job.id}'. Skipping recovery.`,
-              );
-              continue;
-            }
-          }
-
-          await this.repository.recoverStuckJob(
-            job.id,
-            `Visibility timeout (${visibilityTimeoutMs}ms) expired for job status ${job.status}`,
-          );
-          recoveredCount++;
-        }
       }
       return recoveredCount;
     } catch (err: any) {

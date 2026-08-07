@@ -2,19 +2,26 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppConfigModule, appConfigSchema } from '@scheduler/config';
 import { AppLoggerModule } from '@scheduler/logger';
-import { DatabaseModule, ScheduleEntity, JobEntity, ExecutionEntity } from '@scheduler/database';
+import {
+  DatabaseModule,
+  ScheduleEntity,
+  JobEntity,
+  ExecutionEntity,
+  JobAuditEntity,
+  JobEffectEntity,
+} from '@scheduler/database';
 import { RabbitMQModule } from '@scheduler/rabbitmq';
 import { RedisModule } from '@scheduler/redis';
+import { MetricsModule } from '@scheduler-platform/metrics';
 import { WorkerModule } from './worker/worker.module';
 import { HealthModule } from './health/health.module';
-import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
     AppConfigModule.forRoot(appConfigSchema),
     AppLoggerModule.forRoot({ serviceName: 'worker-service' }),
     DatabaseModule.forRoot({
-      entities: [ScheduleEntity, JobEntity, ExecutionEntity],
+      entities: [ScheduleEntity, JobEntity, ExecutionEntity, JobAuditEntity, JobEffectEntity],
     }),
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
@@ -26,9 +33,9 @@ import { MetricsModule } from './metrics/metrics.module';
       }),
     }),
     RedisModule,
+    MetricsModule,
     WorkerModule,
     HealthModule,
-    MetricsModule,
   ],
 })
 export class AppModule {}

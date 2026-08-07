@@ -1,0 +1,48 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Schedules Created Total",
+      "type": "stat",
+      "targets": [
+        { "expr": "sum(scheduler_requests_total{status='success'})", "legendFormat": "Created" }
+      ]
+    },
+    {
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "id": 2,
+      "title": "Active Schedules",
+      "type": "stat",
+      "targets": [{ "expr": "scheduler_active_schedules", "legendFormat": "Active" }]
+    },
+    {
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "id": 3,
+      "title": "Schedule Creation Latency (p95 ms)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(scheduler_schedule_creation_latency_bucket[5m])) by (le))",
+          "legendFormat": "p95 Latency"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["scheduler"],
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Scheduler Dashboard",
+  "uid": "scheduler-overview"
+}

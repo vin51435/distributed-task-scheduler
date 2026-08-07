@@ -1,4 +1,4 @@
-﻿# Chapter 19 — Worker Service & Job Execution Engine
+# Chapter 19 — Worker Service & Job Execution Engine
 
 **Document:** Distributed Task Scheduler Platform
 **Chapter:** 19
@@ -239,31 +239,41 @@ Execution follows a strict sequence.
 
 ```text
 Receive Message
+        │
+        ▼
+Validate Message Envelope
+        │
+        ▼
+PostgreSQL DB Status Check (Source of Truth: SUCCEEDED/DEAD -> Skip)
+        │
+        ▼
+Redis Active Concurrency Check (RUNNING -> Skip)
+        │
+        ▼
+Token Bucket Rate Limit Check (Consume Token or Requeue)
+        │
+        ▼
+Execute Handler with Downstream Idempotency-Key (job_<id>) & Record Effect
+        │
+        ▼
+Mark SUCCEEDED in PostgreSQL & ACK RabbitMQ
+```
 
-↓
+### Worker 2-Tier Idempotency Architecture
 
-Validate
+1. **Tier 1 — Canonical PostgreSQL State Machine**: Before executing business logic, the Worker queries `jobs`. If `status === 'SUCCEEDED'` or `'DEAD'`, the Worker drops the duplicate message immediately.
+2. **Tier 2 — Redis Active Execution Lease**: If `status === 'RUNNING'`, Redis holds `idempotency:worker:<jobId>` to prevent multiple Worker pods from running the same task at the exact same millisecond.
+3. **Layer 3 — Downstream Handler Idempotency & `job_effects`**: Handlers pass `Idempotency-Key: job-<id>` in outgoing HTTP headers (Webhooks/Stripe) and record execution metadata in `job_effects` to ensure effectively-once processing even if a worker crashes post-side-effect.
 
-↓
-
-Check Idempotency
-
-↓
-
-Load Handler
-
-↓
-
-Execute
-
-↓
+---
 
 Record Result
 
 ↓
 
 ACK
-```
+
+````
 
 If execution fails:
 
@@ -281,7 +291,7 @@ NACK
 ↓
 
 Retry Queue
-```
+````
 
 ---
 

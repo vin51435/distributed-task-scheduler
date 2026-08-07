@@ -229,7 +229,7 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
     // 7. Run Job Handler Execution
     try {
       const handler = this.handlerRegistry.getHandler(workerType);
-      await handler.execute(envelope.payload || {});
+      await handler.execute(envelope.payload || {}, envelope.jobId);
 
       await this.executionService.completeExecution(execution.id, envelope.jobId);
       channel.ack(msg);

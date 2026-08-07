@@ -1,6 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
-import { requestContext } from './request-context';
+import { requestContext, getHostname } from './request-context';
 
 export interface AppLoggerModuleOptions {
   serviceName: string;
@@ -21,8 +21,15 @@ export class AppLoggerModule {
               const store = requestContext.getStore();
               return {
                 service: store?.serviceName || options.serviceName,
+                hostname: store?.hostname || getHostname(),
                 correlationId: store?.correlationId,
                 requestId: store?.requestId,
+                traceId: store?.traceId,
+                jobId: store?.jobId,
+                scheduleId: store?.scheduleId,
+                executionId: store?.executionId,
+                workerId: store?.workerId,
+                bucket: store?.bucket,
               };
             },
             transport: isProd

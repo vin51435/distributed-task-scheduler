@@ -1,0 +1,41 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+    {
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Scan Duration (s)",
+      "type": "timeseries",
+      "targets": [{ "expr": "scanner_scan_duration_seconds", "legendFormat": "Scan Duration" }]
+    },
+    {
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "title": "Jobs Created / sec",
+      "type": "timeseries",
+      "targets": [{ "expr": "rate(scanner_jobs_created_total[1m])", "legendFormat": "Jobs/sec" }]
+    },
+    {
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "title": "Bucket Ownership",
+      "type": "stat",
+      "targets": [{ "expr": "scanner_bucket_ownership", "legendFormat": "Buckets Held" }]
+    },
+    {
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "title": "Bucket Scan Latency (ms)",
+      "type": "timeseries",
+      "targets": [{ "expr": "scanner_bucket_scan_latency", "legendFormat": "Latency" }]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["scanner"],
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "Scanner Dashboard",
+  "uid": "scanner-overview"
+}

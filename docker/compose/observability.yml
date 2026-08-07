@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   prometheus:
     image: prom/prometheus:v2.51.0
@@ -28,6 +26,8 @@ services:
       - '${GRAFANA_PORT:-3000}:3000'
     volumes:
       - ../grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ../grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ../grafana/dashboards:/etc/grafana/dashboards:ro
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
@@ -53,6 +53,30 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  rabbitmq_exporter:
+    image: kbudde/rabbitmq-exporter:v1.0.0-RC1
+    container_name: scheduler_rabbitmq_exporter
+    restart: unless-stopped
+    environment:
+      RABBIT_URL: http://rabbitmq:15672
+      RABBIT_USER: ${RABBITMQ_USER:-guest}
+      RABBIT_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - '9419:9419'
+    depends_on:
+      - rabbitmq
+
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:v0.16.0
+    container_name: scheduler_postgres_exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: 'postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-scheduler_db}?sslmode=disable'
+    ports:
+      - '9187:9187'
+    depends_on:
+      - postgres
 
 volumes:
   prometheus_data:

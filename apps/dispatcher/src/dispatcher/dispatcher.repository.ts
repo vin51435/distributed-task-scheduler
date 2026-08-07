@@ -17,16 +17,17 @@ export class DispatcherRepository {
    * Ensures concurrent Dispatcher instances claim non-overlapping job batches instantly.
    */
   async fetchAndClaimReadyJobs(limit: number, now: Date = new Date()): Promise<JobEntity[]> {
+    const staleDispatchedThreshold = new Date(now.getTime() - 15000); // 15 seconds visibility threshold
     const rawQuery = `
       UPDATE jobs
       SET status = $1, last_heartbeat = $2, updated_at = CURRENT_TIMESTAMP
       WHERE id IN (
         SELECT id FROM jobs
         WHERE (status = $3 AND execute_at <= $4 AND (next_retry_at IS NULL OR next_retry_at <= $4))
-           OR (status = $3 AND execute_at <= $4 AND next_retry_at <= $4)
+           OR (status = $1 AND (last_heartbeat IS NULL OR last_heartbeat <= $5))
         ORDER BY priority DESC, execute_at ASC
         FOR UPDATE SKIP LOCKED
-        LIMIT $5
+        LIMIT $6
       )
       RETURNING *;
     `;
@@ -37,6 +38,7 @@ export class DispatcherRepository {
         now,
         JobStatus.READY,
         now,
+        staleDispatchedThreshold,
         limit,
       ]);
 
@@ -72,6 +74,40 @@ export class DispatcherRepository {
       status,
       ...(status === JobStatus.DISPATCHED ? { lastHeartbeat: new Date() } : {}),
     });
+  }
+
+  async recoverStuckJobsBulk(timeoutMs = 60000, now: Date = new Date()): Promise<number> {
+    const threshold = new Date(now.getTime() - timeoutMs);
+    const rawQuery = `
+      UPDATE jobs
+      SET status = $1,
+          last_error = $2,
+          failure_reason = $3,
+          last_heartbeat = NULL,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE status IN ($4, $5)
+        AND (last_heartbeat IS NULL OR last_heartbeat <= $6)
+        AND updated_at <= $6;
+    `;
+
+    try {
+      const result = await this.jobRepository.query(rawQuery, [
+        JobStatus.READY,
+        'Visibility timeout expired: Worker lost or crashed',
+        'VISIBILITY_TIMEOUT',
+        JobStatus.RUNNING,
+        JobStatus.DISPATCHED,
+        threshold,
+      ]);
+
+      if (Array.isArray(result) && result[1] !== undefined) {
+        return Number(result[1]);
+      }
+      return Number(result?.affected || 0);
+    } catch (err: any) {
+      this.logger.error(`Failed bulk stuck job recovery query: ${err.message}`);
+      return 0;
+    }
   }
 
   async findStuckJobs(timeoutMs = 60000, now: Date = new Date()): Promise<JobEntity[]> {

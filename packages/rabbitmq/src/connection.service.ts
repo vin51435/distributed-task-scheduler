@@ -2,6 +2,7 @@ import { Injectable, Inject, Logger, OnModuleInit, OnModuleDestroy } from '@nest
 import amqp, { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 import { ConfirmChannel } from 'amqplib';
 import { RabbitMQModuleOptions, RABBITMQ_MODULE_OPTIONS } from './config';
+import { WORKER_QUEUE_CONFIGS } from './constants';
 
 @Injectable()
 export class ConnectionService implements OnModuleInit, OnModuleDestroy {
@@ -42,17 +43,18 @@ export class ConnectionService implements OnModuleInit, OnModuleDestroy {
 
     const exchangeName = this.options.exchangeName || 'scheduler.exchange';
     const queueName = this.options.queueName || 'scheduler.jobs';
-    const routingKey = this.options.routingKey || 'job.execute';
-
     this.confirmChannelWrapper = this.connectionManager.createChannel({
       json: true,
       setup: async (channel: ConfirmChannel) => {
-        this.logger.log(
-          `Initializing RabbitMQ topology: exchange='${exchangeName}', queue='${queueName}', routingKey='${routingKey}'`,
-        );
+        this.logger.log(`Initializing RabbitMQ topology for exchange='${exchangeName}'`);
         await channel.assertExchange(exchangeName, 'direct', { durable: true });
-        await channel.assertQueue(queueName, { durable: true });
-        await channel.bindQueue(queueName, exchangeName, routingKey);
+
+        for (const config of WORKER_QUEUE_CONFIGS) {
+          await channel.assertQueue(config.name, { durable: true });
+          await channel.bindQueue(config.name, exchangeName, config.routingKey);
+          await channel.assertQueue(config.dlqName, { durable: true });
+          await channel.bindQueue(config.dlqName, exchangeName, config.dlqName);
+        }
       },
     });
   }

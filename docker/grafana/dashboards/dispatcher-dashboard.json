@@ -1,0 +1,41 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+    {
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Publish Rate (/sec)",
+      "type": "timeseries",
+      "targets": [{ "expr": "rate(dispatcher_publish_total[1m])", "legendFormat": "Publish Rate" }]
+    },
+    {
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "title": "Publish Failures",
+      "type": "stat",
+      "targets": [{ "expr": "sum(dispatcher_publish_failures_total)", "legendFormat": "Failures" }]
+    },
+    {
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "title": "Batch Size",
+      "type": "timeseries",
+      "targets": [{ "expr": "dispatcher_batch_size", "legendFormat": "Batch Size" }]
+    },
+    {
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "title": "Dispatch Latency (ms)",
+      "type": "timeseries",
+      "targets": [{ "expr": "dispatcher_dispatch_latency", "legendFormat": "Latency" }]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["dispatcher"],
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "Dispatcher Dashboard",
+  "uid": "dispatcher-overview"
+}

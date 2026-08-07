@@ -15,10 +15,9 @@ describe('Scanner Service Operational API (e2e)', () => {
     expect(res.data).toHaveProperty('jobsCreated');
   });
 
-  it('GET /api/metrics - should return scanner metrics', async () => {
+  it('GET /api/metrics - should return Prometheus scanner metrics', async () => {
     const res = await axios.get('/api/metrics');
     expect(res.status).toBe(200);
-    expect(res.data).toHaveProperty('totalScans');
-    expect(res.data).toHaveProperty('jobsCreated');
+    expect(res.data).toContain('scanner_jobs_created_total');
   });
 });
