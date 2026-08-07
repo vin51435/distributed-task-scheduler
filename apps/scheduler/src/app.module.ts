@@ -9,7 +9,6 @@ import {
   JobAuditEntity,
 } from '@scheduler/database';
 import { MetricsModule } from '@scheduler-platform/metrics';
-import { ElasticsearchModule } from '@scheduler-platform/elasticsearch';
 import { ScheduleModule } from './schedule/schedule.module';
 import { AdminModule } from './admin/admin.module';
 
@@ -21,7 +20,6 @@ import { AdminModule } from './admin/admin.module';
       entities: [ScheduleEntity, JobEntity, ExecutionEntity, JobAuditEntity],
     }),
     MetricsModule,
-    ElasticsearchModule,
     ScheduleModule,
     AdminModule,
   ],

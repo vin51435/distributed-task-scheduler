@@ -10,7 +10,6 @@ import {
 } from '@scheduler/database';
 import { RedisModule } from '@scheduler/redis';
 import { MetricsModule } from '@scheduler-platform/metrics';
-import { ElasticsearchModule } from '@scheduler-platform/elasticsearch';
 import { ScannerModule } from './scanner/scanner.module';
 
 @Module({
@@ -22,7 +21,6 @@ import { ScannerModule } from './scanner/scanner.module';
     }),
     RedisModule,
     MetricsModule,
-    ElasticsearchModule,
     ScannerModule,
   ],
 })

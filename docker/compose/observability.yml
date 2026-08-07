@@ -54,40 +54,6 @@ services:
       timeout: 5s
       retries: 5
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
-    container_name: scheduler_elasticsearch
-    restart: unless-stopped
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
-    ports:
-      - '${ELASTICSEARCH_PORT:-9200}:9200'
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    healthcheck:
-      test: ['CMD-SHELL', 'curl -s http://localhost:9200/_cluster/health | grep -q "status"']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.12.0
-    container_name: scheduler_kibana
-    restart: unless-stopped
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-      - '${KIBANA_PORT:-5601}:5601'
-    depends_on:
-      - elasticsearch
-    healthcheck:
-      test: ['CMD-SHELL', 'curl -s http://localhost:5601/api/status | grep -q "overall"']
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
   rabbitmq_exporter:
     image: kbudde/rabbitmq-exporter:v1.0.0-RC1
     container_name: scheduler_rabbitmq_exporter
@@ -115,4 +81,3 @@ services:
 volumes:
   prometheus_data:
   grafana_data:
-  elasticsearch_data:

@@ -9,7 +9,6 @@ import {
   ScheduleStatus,
   JobAuditEntity,
 } from '@scheduler/database';
-import { ElasticsearchService } from '@scheduler-platform/elasticsearch';
 
 @Injectable()
 export class AdminService {
@@ -24,7 +23,6 @@ export class AdminService {
     private readonly scheduleRepo: Repository<ScheduleEntity>,
     @InjectRepository(JobAuditEntity)
     private readonly auditRepo: Repository<JobAuditEntity>,
-    private readonly elasticsearchService: ElasticsearchService,
   ) {}
 
   async getJobs(status?: JobStatus, tenantId?: string, page = 1, limit = 20) {
@@ -113,7 +111,6 @@ export class AdminService {
       reason: 'Manual admin retry request',
     });
     await this.auditRepo.save(audit);
-    await this.elasticsearchService.indexAudit(audit);
 
     return { message: `Job ${jobId} reset to READY`, job };
   }
@@ -138,7 +135,6 @@ export class AdminService {
       reason: 'Manual admin cancellation',
     });
     await this.auditRepo.save(audit);
-    await this.elasticsearchService.indexAudit(audit);
 
     return { message: `Job ${jobId} cancelled`, job };
   }
@@ -161,12 +157,15 @@ export class AdminService {
       order: { createdAt: 'ASC' },
     });
 
-    const esResults = await this.elasticsearchService.searchJobHistory(jobId);
+    const executions = await this.executionRepo.find({
+      where: { jobId },
+      order: { createdAt: 'ASC' },
+    });
 
     return {
       jobId,
-      dbAuditTrail: dbAudits,
-      elasticsearchHits: esResults,
+      auditTrail: dbAudits,
+      executions,
     };
   }
 }

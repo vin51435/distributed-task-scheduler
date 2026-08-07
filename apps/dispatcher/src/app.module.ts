@@ -12,7 +12,6 @@ import {
 import { RabbitMQModule } from '@scheduler/rabbitmq';
 import { RedisModule } from '@scheduler/redis';
 import { MetricsModule } from '@scheduler-platform/metrics';
-import { ElasticsearchModule } from '@scheduler-platform/elasticsearch';
 import { DispatcherModule } from './dispatcher/dispatcher.module';
 import { HealthModule } from './health/health.module';
 
@@ -34,7 +33,6 @@ import { HealthModule } from './health/health.module';
     }),
     RedisModule,
     MetricsModule,
-    ElasticsearchModule,
     DispatcherModule,
     HealthModule,
   ],
