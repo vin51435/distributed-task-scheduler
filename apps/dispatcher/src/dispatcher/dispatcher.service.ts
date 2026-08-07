@@ -143,31 +143,9 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
       }
 
       for (const job of readyJobs) {
-        // 1. Idempotency pre-check
-        if (this.idempotencyService) {
-          const isFirstTime = await this.idempotencyService.checkAndSet(
-            `idempotency:dispatch:${job.id}`,
-            86400,
-          );
-          if (!isFirstTime) {
-            this.logger.warn(
-              `Idempotency Guard: Job ${job.id} already dispatched previously. Skipping duplicate dispatch.`,
-            );
-            continue;
-          }
-        }
-
-        // 2. Distributed Lock check
-        const lockKey = `lock:job:dispatch:${job.id}`;
-        let lockToken: string | null = null;
-        if (this.lockService) {
-          lockToken = await this.lockService.acquireLock(lockKey, 10000);
-          if (!lockToken) {
-            this.logger.warn(
-              `Dispatch Lock: Job ${job.id} is locked by another dispatcher instance. Skipping.`,
-            );
-            continue;
-          }
+        if (!job || !job.id) {
+          this.logger.warn('Claimed job missing id property. Skipping dispatch batch item.');
+          continue;
         }
 
         try {
@@ -207,10 +185,6 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
             `Failed to publish job ${job.id} to RabbitMQ. Error: ${err.message}`,
             err.stack,
           );
-        } finally {
-          if (this.lockService && lockToken) {
-            await this.lockService.releaseLock(lockKey, lockToken);
-          }
         }
       }
 
@@ -232,34 +206,11 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
 
   public async recoverStuckJobs(visibilityTimeoutMs = 60000): Promise<number> {
     try {
-      const stuckJobs = await this.repository.findStuckJobs(visibilityTimeoutMs);
-      let recoveredCount = 0;
-
-      if (stuckJobs.length > 0) {
+      const recoveredCount = await this.repository.recoverStuckJobsBulk(visibilityTimeoutMs);
+      if (recoveredCount > 0) {
         this.logger.warn(
-          `Found ${stuckJobs.length} stuck job(s) past visibility timeout. Checking worker heartbeats...`,
+          `Dispatcher [${this.instanceId}] atomically recovered ${recoveredCount} stuck job(s) past visibility timeout`,
         );
-
-        for (const job of stuckJobs) {
-          // If Redis heartbeat service is available and job is RUNNING, check worker heartbeat
-          if (this.heartbeatService && job.status === JobStatus.RUNNING) {
-            const hasActiveWorkerHeartbeat = await this.heartbeatService.isAlive(
-              `worker:job:${job.id}`,
-            );
-            if (hasActiveWorkerHeartbeat) {
-              this.logger.log(
-                `Job ${job.id} is still actively emitting worker heartbeat 'worker:job:${job.id}'. Skipping recovery.`,
-              );
-              continue;
-            }
-          }
-
-          await this.repository.recoverStuckJob(
-            job.id,
-            `Visibility timeout (${visibilityTimeoutMs}ms) expired for job status ${job.status}`,
-          );
-          recoveredCount++;
-        }
       }
       return recoveredCount;
     } catch (err: any) {

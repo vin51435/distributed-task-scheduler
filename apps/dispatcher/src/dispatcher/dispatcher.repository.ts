@@ -17,16 +17,17 @@ export class DispatcherRepository {
    * Ensures concurrent Dispatcher instances claim non-overlapping job batches instantly.
    */
   async fetchAndClaimReadyJobs(limit: number, now: Date = new Date()): Promise<JobEntity[]> {
+    const staleDispatchedThreshold = new Date(now.getTime() - 15000); // 15 seconds visibility threshold
     const rawQuery = `
       UPDATE jobs
       SET status = $1, last_heartbeat = $2, updated_at = CURRENT_TIMESTAMP
       WHERE id IN (
         SELECT id FROM jobs
         WHERE (status = $3 AND execute_at <= $4 AND (next_retry_at IS NULL OR next_retry_at <= $4))
-           OR (status = $3 AND execute_at <= $4 AND next_retry_at <= $4)
+           OR (status = $1 AND (last_heartbeat IS NULL OR last_heartbeat <= $5))
         ORDER BY priority DESC, execute_at ASC
         FOR UPDATE SKIP LOCKED
-        LIMIT $5
+        LIMIT $6
       )
       RETURNING *;
     `;
@@ -37,6 +38,7 @@ export class DispatcherRepository {
         now,
         JobStatus.READY,
         now,
+        staleDispatchedThreshold,
         limit,
       ]);
 
@@ -74,6 +76,40 @@ export class DispatcherRepository {
     });
   }
 
+  async recoverStuckJobsBulk(timeoutMs = 60000, now: Date = new Date()): Promise<number> {
+    const threshold = new Date(now.getTime() - timeoutMs);
+    const rawQuery = `
+      UPDATE jobs
+      SET status = $1,
+          last_error = $2,
+          failure_reason = $3,
+          last_heartbeat = NULL,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE status IN ($4, $5)
+        AND (last_heartbeat IS NULL OR last_heartbeat <= $6)
+        AND updated_at <= $6;
+    `;
+
+    try {
+      const result = await this.jobRepository.query(rawQuery, [
+        JobStatus.READY,
+        'Visibility timeout expired: Worker lost or crashed',
+        'VISIBILITY_TIMEOUT',
+        JobStatus.RUNNING,
+        JobStatus.DISPATCHED,
+        threshold,
+      ]);
+
+      if (Array.isArray(result) && result[1] !== undefined) {
+        return Number(result[1]);
+      }
+      return Number(result?.affected || 0);
+    } catch (err: any) {
+      this.logger.error(`Failed bulk stuck job recovery query: ${err.message}`);
+      return 0;
+    }
+  }
+
   async findStuckJobs(timeoutMs = 60000, now: Date = new Date()): Promise<JobEntity[]> {
     const threshold = new Date(now.getTime() - timeoutMs);
 
@@ -100,25 +136,35 @@ export class DispatcherRepository {
   }
 
   private mapRawToJobEntity(r: any): JobEntity {
+    const row = Array.isArray(r) ? r[0] : r;
     const entity = new JobEntity();
-    entity.id = r.id;
-    entity.createdAt = r.created_at ? new Date(r.created_at) : new Date();
-    entity.updatedAt = r.updated_at ? new Date(r.updated_at) : new Date();
-    entity.scheduleId = r.schedule_id;
-    entity.status = r.status;
-    entity.executeAt = r.execute_at ? new Date(r.execute_at) : new Date();
-    entity.payload = typeof r.payload === 'string' ? JSON.parse(r.payload) : r.payload;
-    entity.attempt = r.attempt;
-    entity.maxAttempts = r.max_attempts;
-    entity.retryPolicy = r.retry_policy;
-    entity.nextRetryAt = r.next_retry_at ? new Date(r.next_retry_at) : undefined;
-    entity.lastError = r.last_error;
-    entity.failureReason = r.failure_reason;
-    entity.lastHeartbeat = r.last_heartbeat ? new Date(r.last_heartbeat) : undefined;
-    entity.workerType = r.worker_type;
-    entity.routingKey = r.routing_key;
-    entity.priority = r.priority;
-    entity.tenantId = r.tenant_id;
+    entity.id = row.id || row.Id || row.ID;
+    entity.createdAt =
+      row.created_at || row.createdAt ? new Date(row.created_at || row.createdAt) : new Date();
+    entity.updatedAt =
+      row.updated_at || row.updatedAt ? new Date(row.updated_at || row.updatedAt) : new Date();
+    entity.scheduleId = row.schedule_id || row.scheduleId;
+    entity.status = row.status;
+    entity.executeAt =
+      row.execute_at || row.executeAt ? new Date(row.execute_at || row.executeAt) : new Date();
+    entity.payload = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload || {};
+    entity.attempt = Number(row.attempt || 0);
+    entity.maxAttempts = Number(row.max_attempts || row.maxAttempts || 5);
+    entity.retryPolicy = row.retry_policy || row.retryPolicy;
+    entity.nextRetryAt =
+      row.next_retry_at || row.nextRetryAt
+        ? new Date(row.next_retry_at || row.nextRetryAt)
+        : undefined;
+    entity.lastError = row.last_error || row.lastError;
+    entity.failureReason = row.failure_reason || row.failureReason;
+    entity.lastHeartbeat =
+      row.last_heartbeat || row.lastHeartbeat
+        ? new Date(row.last_heartbeat || row.lastHeartbeat)
+        : undefined;
+    entity.workerType = row.worker_type || row.workerType;
+    entity.routingKey = row.routing_key || row.routingKey;
+    entity.priority = Number(row.priority || 0);
+    entity.tenantId = row.tenant_id || row.tenantId;
     return entity;
   }
 }
