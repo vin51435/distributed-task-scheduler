@@ -222,61 +222,42 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
       for (const schedule of dueSchedules) {
         try {
           const executeAtTime = schedule.nextExecuteAt || now;
-          const lockKey = `lock:schedule:${schedule.id}:${executeAtTime.getTime()}`;
 
-          // 4. Distributed Lock check per schedule execution
-          let lockToken: string | null = null;
-          if (this.lockService) {
-            lockToken = await this.lockService.acquireLock(lockKey, 30000);
-            if (!lockToken) {
-              this.logger.warn(
-                `Schedule ${schedule.id} locked by another instance. Skipping duplicate job creation.`,
-              );
-              continue;
-            }
-          }
+          await this.repository.createJob({
+            scheduleId: schedule.id,
+            status: JobStatus.READY,
+            executeAt: executeAtTime,
+            payload: schedule.payload,
+            attempt: 0,
+            maxAttempts: schedule.maxAttempts || 5,
+            retryPolicy: schedule.retryPolicy,
+            workerType: schedule.workerType,
+            routingKey:
+              schedule.routingKey ||
+              (schedule.workerType ? `worker.${schedule.workerType.toLowerCase()}` : undefined),
+            priority: schedule.priority || 0,
+            tenantId: schedule.tenantId,
+          });
 
-          try {
-            await this.repository.createJob({
-              scheduleId: schedule.id,
-              status: JobStatus.READY,
-              executeAt: executeAtTime,
-              payload: schedule.payload,
-              attempt: 0,
-              maxAttempts: schedule.maxAttempts || 5,
-              retryPolicy: schedule.retryPolicy,
-              workerType: schedule.workerType,
-              routingKey:
-                schedule.routingKey ||
-                (schedule.workerType ? `worker.${schedule.workerType.toLowerCase()}` : undefined),
-              priority: schedule.priority || 0,
-              tenantId: schedule.tenantId,
+          jobsCreatedCount++;
+
+          if (schedule.type === ScheduleType.ONE_OFF) {
+            await this.repository.updateSchedule(schedule.id, {
+              status: ScheduleStatus.COMPLETED,
             });
-
-            jobsCreatedCount++;
-
-            if (schedule.type === ScheduleType.ONE_OFF) {
-              await this.repository.updateSchedule(schedule.id, {
-                status: ScheduleStatus.COMPLETED,
-              });
-            } else if (schedule.type === ScheduleType.CRON && schedule.cron) {
-              const nextRunDate = this.calculateNextExecution(
-                schedule.cron,
-                schedule.timezone || 'UTC',
-                executeAtTime,
-              );
-              await this.repository.updateSchedule(schedule.id, {
-                nextExecuteAt: nextRunDate,
-              });
-            }
-          } finally {
-            if (this.lockService && lockToken) {
-              await this.lockService.releaseLock(lockKey, lockToken);
-            }
+          } else if (schedule.type === ScheduleType.CRON && schedule.cron) {
+            const nextRunDate = this.calculateNextExecution(
+              schedule.cron,
+              schedule.timezone || 'UTC',
+              executeAtTime,
+            );
+            await this.repository.updateSchedule(schedule.id, {
+              nextExecuteAt: nextRunDate,
+            });
           }
         } catch (err: any) {
           this.logger.error(
-            `Failed to process schedule ID ${schedule.id}: ${err.message}`,
+            `Failed to promote schedule ${schedule.id} to job: ${err.message}`,
             err.stack,
           );
         }
