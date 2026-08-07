@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Optional } from '@ne
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { JobStatus } from '@scheduler/database';
-import { PublisherService } from '@scheduler/rabbitmq';
+import { PublisherService, WORKER_QUEUE_CONFIGS } from '@scheduler/rabbitmq';
 import { LockService, IdempotencyService, HeartbeatService } from '@scheduler/redis';
 import { DispatcherRepository } from './dispatcher.repository';
 
@@ -148,10 +148,47 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
           continue;
         }
 
+        // 1. Idempotency pre-check
+        if (this.idempotencyService) {
+          const isFirstTime = await this.idempotencyService.checkAndSet(
+            `idempotency:dispatch:${job.id}`,
+            86400,
+          );
+          if (!isFirstTime) {
+            this.logger.warn(
+              `Idempotency Guard: Job ${job.id} already dispatched previously. Skipping duplicate dispatch.`,
+            );
+            continue;
+          }
+        }
+
+        // 2. Distributed Lock check
+        const lockKey = `lock:job:dispatch:${job.id}`;
+        let lockToken: string | null = null;
+        if (this.lockService) {
+          lockToken = await this.lockService.acquireLock(lockKey, 10000);
+          if (!lockToken) {
+            this.logger.warn(
+              `Dispatch Lock: Job ${job.id} is locked by another dispatcher instance. Skipping.`,
+            );
+            continue;
+          }
+        }
+
         try {
-          const effectiveRoutingKey =
-            job.routingKey ||
-            (job.workerType ? `worker.${job.workerType.toLowerCase()}` : this.routingKey);
+          const knownWorkerRoutingKeys: string[] = WORKER_QUEUE_CONFIGS.map((c) => c.routingKey);
+          let effectiveRoutingKey = job.routingKey;
+
+          if (!effectiveRoutingKey && job.workerType) {
+            const candidateKey = `worker.${job.workerType.toLowerCase()}`;
+            if (knownWorkerRoutingKeys.includes(candidateKey)) {
+              effectiveRoutingKey = candidateKey;
+            }
+          }
+
+          if (!effectiveRoutingKey) {
+            effectiveRoutingKey = this.routingKey;
+          }
 
           const payloadEnvelope = {
             jobId: job.id,
