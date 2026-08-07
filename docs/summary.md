@@ -249,6 +249,30 @@ Task Result ──► SUCCEEDED / FAILED (Retries update Job execute_at & status
 
 ---
 
+# System Phase Guarantees & Idempotency Model
+
+| System Phase            | Mechanism                                             | Real-World Guarantee                                                      |
+| :---------------------- | :---------------------------------------------------- | :------------------------------------------------------------------------ |
+| **Scheduler ➔ Scanner** | Redis Leader Election & Bucket Partitioning           | **Exactly-once** job creation per schedule interval                       |
+| **Dispatcher Layer**    | PostgreSQL `FOR UPDATE SKIP LOCKED`                   | **Exactly-once** job claiming per batch across concurrent dispatchers     |
+| **Messaging Layer**     | RabbitMQ Direct Exchanges & Durable Queues            | **At-least-once** message delivery                                        |
+| **Worker Runtime**      | DB State (`SUCCEEDED`/`DEAD`) + Redis `RUNNING` Lease | **At-most-one** concurrent execution per job ID                           |
+| **Business Operations** | Downstream Idempotency Keys (`job_effects` & Headers) | **Requires idempotent handlers** to avoid duplicate external side-effects |
+
+```text
+Exactly-once job claiming (PostgreSQL FOR UPDATE SKIP LOCKED)
+        +
+At-least-once message delivery (RabbitMQ Direct Exchange)
+        +
+At-most-one concurrent execution (DB State + Redis Lease)
+        +
+Idempotent job handlers (Downstream Idempotency-Key & job_effects metadata)
+        =
+Effectively-once business processing
+```
+
+---
+
 # System Database Model Evolution
 
 ```text

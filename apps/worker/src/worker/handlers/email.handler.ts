@@ -6,8 +6,13 @@ export class EmailHandler implements JobHandler {
   readonly type = 'EMAIL';
   private readonly logger = new Logger(EmailHandler.name);
 
-  async execute(payload: Record<string, any>): Promise<void> {
-    this.logger.log(`Starting EmailHandler execution for payload: ${JSON.stringify(payload)}`);
+  async execute(payload: Record<string, any>, jobId?: string): Promise<void> {
+    const idempotencyKey = jobId ? `job-${jobId}` : 'idem-unknown';
+    this.logger.log(
+      `Starting EmailHandler execution (Entity-ID: ${idempotencyKey}) for payload: ${JSON.stringify(
+        payload,
+      )}`,
+    );
 
     if (payload?.delayMs) {
       await new Promise((resolve) => setTimeout(resolve, Number(payload.delayMs)));
@@ -29,6 +34,6 @@ export class EmailHandler implements JobHandler {
       );
     }
 
-    this.logger.log('Executed EmailHandler successfully');
+    this.logger.log(`Executed EmailHandler successfully (Message-ID: ${idempotencyKey})`);
   }
 }

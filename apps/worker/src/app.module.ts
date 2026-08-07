@@ -8,6 +8,7 @@ import {
   JobEntity,
   ExecutionEntity,
   JobAuditEntity,
+  JobEffectEntity,
 } from '@scheduler/database';
 import { RabbitMQModule } from '@scheduler/rabbitmq';
 import { RedisModule } from '@scheduler/redis';
@@ -20,7 +21,7 @@ import { HealthModule } from './health/health.module';
     AppConfigModule.forRoot(appConfigSchema),
     AppLoggerModule.forRoot({ serviceName: 'worker-service' }),
     DatabaseModule.forRoot({
-      entities: [ScheduleEntity, JobEntity, ExecutionEntity, JobAuditEntity],
+      entities: [ScheduleEntity, JobEntity, ExecutionEntity, JobAuditEntity, JobEffectEntity],
     }),
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],

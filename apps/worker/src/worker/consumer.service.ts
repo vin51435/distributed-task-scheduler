@@ -143,22 +143,38 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
       `Worker [${this.instanceId}] received message for Job ${envelope.jobId} (workerType: '${workerType}')`,
     );
 
-    // 2. Redis Fast Idempotency Check
-    if (this.idempotencyService) {
+    // 2. DB Status Validation & Idempotency (Primary Source of Truth)
+    const existingJob = await this.executionService.findJobById(envelope.jobId);
+    if (!existingJob) {
+      this.logger.warn(`Job ${envelope.jobId} not found in database. Dropping message.`);
+      channel.ack(msg);
+      return;
+    }
+
+    if (existingJob.status === JobStatus.SUCCEEDED || existingJob.status === JobStatus.DEAD) {
+      this.logger.warn(
+        `Idempotency Guard (DB): Job ${envelope.jobId} is already in final '${existingJob.status}' state. Skipping execution.`,
+      );
+      channel.ack(msg);
+      return;
+    }
+
+    // 3. Redis Fast Idempotency Check (Guard against active concurrent execution)
+    if (this.idempotencyService && existingJob.status === JobStatus.RUNNING) {
       const isFirstTime = await this.idempotencyService.checkAndSet(
         `idempotency:worker:${envelope.jobId}`,
         86400,
       );
       if (!isFirstTime) {
         this.logger.warn(
-          `Idempotency Guard (Redis): Job ${envelope.jobId} already executed by a worker. Skipping duplicate execution.`,
+          `Idempotency Guard (Redis): Job ${envelope.jobId} is currently running elsewhere. Skipping duplicate execution.`,
         );
         channel.ack(msg);
         return;
       }
     }
 
-    // 3. Rate Limiting Check
+    // 4. Rate Limiting Check
     if (this.rateLimiterService) {
       const limit = workerType === 'EMAIL' ? 100 : workerType === 'WEBHOOK' ? 20 : 200;
       const fillRate = limit;
@@ -172,33 +188,12 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
         this.logger.warn(
           `Rate Limiter Guard: Rate limit exceeded for workerType '${workerType}'. Requeuing Job ${envelope.jobId}.`,
         );
-        // Clear Redis idempotency key so requeued attempt can process later
         if (this.idempotencyService) {
           await this.idempotencyService.clear(`idempotency:worker:${envelope.jobId}`);
         }
         channel.nack(msg, false, true);
         return;
       }
-    }
-
-    // 4. DB Status Validation & Idempotency
-    const existingJob = await this.executionService.findJobById(envelope.jobId);
-    if (!existingJob) {
-      this.logger.warn(`Job ${envelope.jobId} not found in database. Dropping message.`);
-      channel.ack(msg);
-      return;
-    }
-
-    if (
-      existingJob.status === JobStatus.RUNNING ||
-      existingJob.status === JobStatus.SUCCEEDED ||
-      existingJob.status === JobStatus.DEAD
-    ) {
-      this.logger.warn(
-        `Idempotency Guard (DB): Job ${envelope.jobId} is currently in '${existingJob.status}' state. Skipping duplicate execution.`,
-      );
-      channel.ack(msg);
-      return;
     }
 
     // 5. Start Execution Record
@@ -236,7 +231,7 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
     // 7. Run Job Handler Execution
     try {
       const handler = this.handlerRegistry.getHandler(workerType);
-      await handler.execute(envelope.payload || {});
+      await handler.execute(envelope.payload || {}, envelope.jobId);
 
       await this.executionService.completeExecution(execution.id, envelope.jobId);
       channel.ack(msg);

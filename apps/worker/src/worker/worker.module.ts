@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ExecutionEntity, JobEntity } from '@scheduler/database';
+import { ExecutionEntity, JobEntity, JobEffectEntity } from '@scheduler/database';
 import { EmailHandler } from './handlers/email.handler';
 import { WebhookHandler } from './handlers/webhook.handler';
 import { NoopHandler } from './handlers/noop.handler';
@@ -10,7 +10,7 @@ import { ExecutionService } from './execution.service';
 import { ConsumerService } from './consumer.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ExecutionEntity, JobEntity])],
+  imports: [TypeOrmModule.forFeature([ExecutionEntity, JobEntity, JobEffectEntity])],
   providers: [
     EmailHandler,
     WebhookHandler,

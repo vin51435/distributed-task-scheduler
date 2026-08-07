@@ -5,3 +5,4 @@ export * from './entities/schedule.entity';
 export * from './entities/job.entity';
 export * from './entities/execution.entity';
 export * from './entities/job-audit.entity';
+export * from './entities/job-effect.entity';

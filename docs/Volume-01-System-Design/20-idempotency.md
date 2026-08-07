@@ -1,4 +1,4 @@
-﻿# Chapter 20 — Idempotency & Effectively-Once Processing
+# Chapter 20 — Idempotency & Effectively-Once Processing
 
 **Document:** Distributed Task Scheduler Platform
 **Chapter:** 20
@@ -134,6 +134,16 @@ Effectively Once
 ```
 
 This is the model used by most large-scale distributed systems.
+
+### System Phase Guarantees Matrix
+
+| System Phase            | Mechanism                                             | Real-World Guarantee                                                      |
+| :---------------------- | :---------------------------------------------------- | :------------------------------------------------------------------------ |
+| **Scheduler ➔ Scanner** | Redis Leader Election & Bucket Partitioning           | **Exactly-once** job creation per schedule interval                       |
+| **Dispatcher Layer**    | PostgreSQL `FOR UPDATE SKIP LOCKED`                   | **Exactly-once** job claiming per batch across concurrent dispatchers     |
+| **Messaging Layer**     | RabbitMQ Direct Exchanges & Durable Queues            | **At-least-once** message delivery                                        |
+| **Worker Runtime**      | DB State (`SUCCEEDED`/`DEAD`) + Redis `RUNNING` Lease | **At-most-one** concurrent execution per job ID                           |
+| **Business Operations** | Downstream Idempotency Keys (e.g. SMTP/Stripe header) | **Requires idempotent handlers** to avoid duplicate external side-effects |
 
 ---
 
@@ -380,30 +390,25 @@ Business logic runs only once.
 
 ---
 
-# 20.11 Idempotency Storage
+# 20.11 Idempotency & Side-Effect Storage
 
-Initially, completed keys are stored in PostgreSQL.
+System idempotency relies on PostgreSQL as the single source of truth across all tiers:
 
-Table:
+1. **Dispatcher Claim Tier**: PostgreSQL `jobs` table updated via `UPDATE jobs SET status = 'DISPATCHED' ... WHERE id IN (SELECT id FROM jobs WHERE status = 'READY' FOR UPDATE SKIP LOCKED LIMIT 500) RETURNING *`.
+2. **Worker Runtime Tier**: PostgreSQL `jobs` status (`SUCCEEDED`/`DEAD`) + `executions` audit log.
+3. **Side-Effect Audit Tier**: `job_effects` table tracking downstream execution metadata.
 
-```text
-idempotency_keys
-```
+Table: `job_effects`
 
-Example fields:
-
-| Field      | Purpose                          |
-| ---------- | -------------------------------- |
-| key        | Idempotency identifier           |
-| job_id     | Related job                      |
-| status     | IN_PROGRESS / COMPLETED / FAILED |
-| response   | Stored execution result          |
-| created_at | Creation time                    |
-| expires_at | Cleanup time                     |
-
-Frequently accessed keys may also be cached in Redis for faster duplicate detection.
-
-PostgreSQL remains the source of truth.
+| Field         | Type        | Purpose                                                                  |
+| :------------ | :---------- | :----------------------------------------------------------------------- |
+| `id`          | UUID        | Primary Key                                                              |
+| `job_id`      | UUID        | Foreign Key to `jobs.id` (Indexed)                                       |
+| `effect_type` | VARCHAR     | Operation type (`EMAIL`, `WEBHOOK`, `S3_UPLOAD`, `PAYMENT`)              |
+| `external_id` | VARCHAR     | Downstream Provider ID (SendGrid Msg ID, Request UUID, Stripe Charge ID) |
+| `status`      | VARCHAR     | Effect status (`SUCCESS`, `PENDING`, `FAILED`)                           |
+| `metadata`    | JSONB       | Execution headers and response metadata                                  |
+| `created_at`  | TIMESTAMPTZ | Creation timestamp                                                       |
 
 ---
 
