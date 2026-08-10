@@ -2,7 +2,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import { z } from 'zod';
 
-export function validateConfig<T extends z.ZodTypeAny>(
+export function validateConfig<T extends z.ZodType<any>>(
   schema: T,
   config: Record<string, unknown> = process.env,
 ): z.infer<T> {
@@ -16,7 +16,7 @@ export function validateConfig<T extends z.ZodTypeAny>(
 
 @Module({})
 export class AppConfigModule {
-  static forRoot<T extends z.ZodTypeAny>(schema: T): DynamicModule {
+  static forRoot<T extends z.ZodType<any>>(schema: T): DynamicModule {
     return {
       module: AppConfigModule,
       imports: [

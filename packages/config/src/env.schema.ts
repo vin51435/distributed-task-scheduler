@@ -8,7 +8,7 @@ export const baseEnvSchema = z.object({
 
 export type BaseEnvConfig = z.infer<typeof baseEnvSchema>;
 
-export function validateEnv<T extends z.ZodTypeAny>(
+export function validateEnv<T extends z.ZodType<any>>(
   schema: T,
   config: Record<string, unknown> = process.env,
 ): z.infer<T> {
