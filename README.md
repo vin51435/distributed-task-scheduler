@@ -69,28 +69,6 @@ The platform separates responsibilities into three distinct planes:
    - Workers execute business tasks and persist run details (`started_at`, `finished_at`, `error_message`) into the **`Executions`** table.
    - Status lifecycle: `READY` $\rightarrow$ `DISPATCHED` $\rightarrow$ `RUNNING` $\rightarrow$ `SUCCEEDED` / `FAILED`.
 
-## Project Structure
-
-```text
-distributed-task-scheduler/
-├── scheduler-api/             # API Gateway & Scheduler Service (Schedules CRUD & intent)
-├── timer-service/             # High-precision timer store & schedule trigger engine
-├── scanner-service/           # Partitioned scanner promoting due schedules to READY jobs
-├── dispatcher-service/        # Batch reader publishing READY jobs to RabbitMQ Topic Exchange
-├── worker-service/            # Specialized execution workers (Email, Webhook, Image, AI)
-├── cron-service/              # Cron expression parser & recurring schedule evaluator
-├── coordinator-service/       # Leader election, partition leasing, and Redis locking
-├── notification-service/      # Event-driven notification and webhook service
-├── shared/                    # Monorepo shared modules (proto, common, config, logger, database)
-│   ├── proto/                 # Protocol buffer definitions for gRPC & IPC
-│   ├── common/                # Shared utilities, types, and constants
-│   ├── config/                # Environment configuration management
-│   └── logger/                # Structured JSON logging initialization
-├── docker/                    # Docker Compose specs & local infrastructure
-├── kubernetes/                # Kubernetes manifests, Helm charts, and Kustomize overlays
-└── scripts/                   # Setup, build, migration, and automation scripts
-```
-
 ## Infrastructure
 
 Local development infrastructure is managed via Docker Compose.
