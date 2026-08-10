@@ -1,6 +1,6 @@
 # Distributed Task Scheduler & Execution Platform
 
-A general-purpose, fault-tolerant, highly available, and scalable distributed task scheduling and execution system (supporting emails, notifications, webhooks, media processing, AI inference, backups, data pipelines, etc.).
+A general-purpose, fault-tolerant, highly available, and scalable distributed task scheduling and execution system.
 
 ## 3-Plane System Architecture
 
@@ -119,13 +119,3 @@ npm run docker:down
 | **Prometheus**    | `9090`    | `9090`        | [http://localhost:9090](http://localhost:9090) Metrics Collector           |
 | **Grafana**       | `3000`    | `3000`        | [http://localhost:3000](http://localhost:3000) Dashboard (`admin`/`admin`) |
 | **Jaeger**        | `16686`   | `16686`       | [http://localhost:16686](http://localhost:16686) Distributed Tracing UI    |
-
-## Development Roadmap
-
-- [x] **Phase 1 — Repository Setup**: Monorepo with NestJS, TypeScript, ESLint, Prettier.
-- [x] **Phase 2 — Infrastructure**: Docker Compose with PostgreSQL, Redis, RabbitMQ, Prometheus, Grafana, Jaeger.
-- [x] **Phase 3 — Documentation**: 3-Plane Architecture refactoring (Timing, Dispatch, Execution).
-- [ ] **Phase 4 — Shared Packages**: Reusable infrastructure libraries (`database`, `rabbitmq`, `redis`, etc.).
-- [ ] **Phase 5 — Scheduler & Scanner Services**: Schedules management and `READY` job generation.
-- [ ] **Phase 6 — Dispatcher & RabbitMQ Exchange**: Topic routing and batch publishing.
-- [ ] **Phase 7 — Specialized Execution Workers**: Specialized worker deployments and `Executions` table history.
