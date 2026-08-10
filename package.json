@@ -34,7 +34,7 @@
     "@opentelemetry/semantic-conventions": "^1.43.0",
     "amqp-connection-manager": "^5.0.0",
     "amqplib": "^2.0.1",
-    "axios": "^1.6.0",
+    "axios": "^1.19.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cron-parser": "^5.7.0",
