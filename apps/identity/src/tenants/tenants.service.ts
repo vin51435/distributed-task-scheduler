@@ -39,15 +39,7 @@ export class TenantsService {
 
   async getLimits(tenantId: string) {
     const limits = await this.limitsRepo.findOne({ where: { tenantId } });
-    if (!limits) {
-      return {
-        tenantId,
-        maxSchedules: 50,
-        maxJobs: 1000,
-        maxWorkers: 10,
-        maxRequestsPerMinute: 300,
-      };
-    }
+    if (!limits) throw new NotFoundException('Tenant not found');
     return limits;
   }
 
