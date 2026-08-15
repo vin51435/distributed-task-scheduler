@@ -10,6 +10,8 @@ export enum ScheduleType {
 export enum ScheduleStatus {
   ACTIVE = 'ACTIVE',
   PAUSED = 'PAUSED',
+  DISABLED = 'DISABLED',
+  ARCHIVED = 'ARCHIVED',
   COMPLETED = 'COMPLETED',
   WAITING = 'WAITING',
 }

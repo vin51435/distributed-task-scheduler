@@ -72,7 +72,7 @@ describe('ScheduleRepository', () => {
   describe('findAll', () => {
     it('should return an array of schedules', async () => {
       const result = await repository.findAll();
-      expect(typeormRepo.find).toHaveBeenCalledWith({ order: { createdAt: 'DESC' } });
+      expect(typeormRepo.find).toHaveBeenCalledWith({ where: {}, order: { createdAt: 'DESC' } });
       expect(result).toEqual([mockSchedule]);
     });
   });

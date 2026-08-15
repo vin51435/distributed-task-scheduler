@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ScheduleService } from './schedule.service';
@@ -29,16 +30,30 @@ export class ScheduleController {
     type: ScheduleResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Invalid input data or validation error' })
-  async create(@Body() createScheduleDto: CreateScheduleDto): Promise<ScheduleResponseDto> {
-    const entity = await this.scheduleService.createSchedule(createScheduleDto);
+  async create(
+    @Body() createScheduleDto: CreateScheduleDto,
+    @Headers('x-tenant-id') tenantId?: string,
+  ): Promise<ScheduleResponseDto> {
+    const entity = await this.scheduleService.createSchedule(createScheduleDto, tenantId);
     return ScheduleResponseDto.fromEntity(entity);
+  }
+
+  @Post('batch')
+  @ApiOperation({ summary: 'Batch create up to 1000 schedules in a single transaction' })
+  @ApiResponse({ status: 201, description: 'Schedules created in batch' })
+  async createBatch(@Body() dtos: CreateScheduleDto[], @Headers('x-tenant-id') tenantId?: string) {
+    const result = await this.scheduleService.createBatchSchedules(dtos, tenantId);
+    return {
+      created: result.created,
+      schedules: result.schedules.map(ScheduleResponseDto.fromEntity),
+    };
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all schedules' })
   @ApiResponse({ status: 200, description: 'List of all schedules', type: [ScheduleResponseDto] })
-  async findAll(): Promise<ScheduleResponseDto[]> {
-    const entities = await this.scheduleService.getSchedules();
+  async findAll(@Headers('x-tenant-id') tenantId?: string): Promise<ScheduleResponseDto[]> {
+    const entities = await this.scheduleService.getSchedules(tenantId);
     return entities.map(ScheduleResponseDto.fromEntity);
   }
 
@@ -49,6 +64,22 @@ export class ScheduleController {
   @ApiResponse({ status: 404, description: 'Schedule not found' })
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ScheduleResponseDto> {
     const entity = await this.scheduleService.getScheduleById(id);
+    return ScheduleResponseDto.fromEntity(entity);
+  }
+
+  @Post(':id/pause')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Pause a schedule' })
+  async pause(@Param('id', ParseUUIDPipe) id: string): Promise<ScheduleResponseDto> {
+    const entity = await this.scheduleService.pauseSchedule(id);
+    return ScheduleResponseDto.fromEntity(entity);
+  }
+
+  @Post(':id/resume')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resume a paused schedule' })
+  async resume(@Param('id', ParseUUIDPipe) id: string): Promise<ScheduleResponseDto> {
+    const entity = await this.scheduleService.resumeSchedule(id);
     return ScheduleResponseDto.fromEntity(entity);
   }
 

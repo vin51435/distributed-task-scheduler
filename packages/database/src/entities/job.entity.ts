@@ -8,6 +8,7 @@ export enum JobStatus {
   SUCCEEDED = 'SUCCEEDED',
   FAILED = 'FAILED',
   DEAD = 'DEAD',
+  CANCELLED = 'CANCELLED',
 }
 
 export enum RetryPolicy {

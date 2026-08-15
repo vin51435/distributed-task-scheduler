@@ -5,7 +5,7 @@ import { JobStatus, RetryPolicy } from '@scheduler/database';
 import { calculateNextRetryAt, isRetryableError } from '@scheduler/errors';
 import { IdempotencyService, HeartbeatService, RateLimiterService } from '@scheduler/redis';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
-import { HandlerRegistry } from './handler.registry';
+import { HandlerRegistry } from '@scheduler-platform/handlers';
 import { ExecutionService } from './execution.service';
 
 export interface JobMessageEnvelope {

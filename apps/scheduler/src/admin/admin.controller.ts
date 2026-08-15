@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Query, Param, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JobStatus } from '@scheduler/database';
@@ -12,15 +12,29 @@ export class AdminController {
   @ApiOperation({ summary: 'List and filter jobs' })
   @ApiQuery({ name: 'status', enum: JobStatus, required: false })
   @ApiQuery({ name: 'tenantId', required: false })
+  @ApiQuery({ name: 'workerType', required: false })
+  @ApiQuery({ name: 'createdAfter', required: false })
+  @ApiQuery({ name: 'createdBefore', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   async getJobs(
     @Query('status') status?: JobStatus,
     @Query('tenantId') tenantId?: string,
+    @Query('workerType') workerType?: string,
+    @Query('createdAfter') createdAfter?: string,
+    @Query('createdBefore') createdBefore?: string,
     @Query('page') page = 1,
     @Query('limit') limit = 20,
   ) {
-    return this.adminService.getJobs(status, tenantId, Number(page), Number(limit));
+    return this.adminService.searchJobs({
+      status,
+      tenantId,
+      workerType,
+      createdAfter,
+      createdBefore,
+      page: Number(page),
+      limit: Number(limit),
+    });
   }
 
   @Get('executions')
@@ -54,21 +68,31 @@ export class AdminController {
     return this.adminService.getQueues();
   }
 
-  @Post('retry')
+  @Post('jobs/:id/retry')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Manually retry a failed or dead job' })
-  async retryJob(@Body('jobId') jobId: string) {
+  async retryJob(@Param('id') jobId: string) {
     return this.adminService.retryJob(jobId);
   }
 
-  @Post('cancel')
-  @ApiOperation({ summary: 'Manually cancel a pending job' })
-  async cancelJob(@Body('jobId') jobId: string) {
+  @Post('jobs/:id/cancel')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Manually cancel a job' })
+  async cancelJob(@Param('id') jobId: string) {
     return this.adminService.cancelJob(jobId);
   }
 
-  @Post('pause')
+  @Post('executions/:id/replay')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Replay a past execution as a new ready job' })
+  async replayExecution(@Param('id') executionId: string) {
+    return this.adminService.replayExecution(executionId);
+  }
+
+  @Post('schedules/:id/pause')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Pause a schedule' })
-  async pauseSchedule(@Body('scheduleId') scheduleId: string) {
+  async pauseSchedule(@Param('id') scheduleId: string) {
     return this.adminService.pauseSchedule(scheduleId);
   }
 

@@ -1,0 +1,11 @@
+{
+  "name": "@scheduler-platform/sdk",
+  "version": "0.1.0",
+  "main": "../../dist/packages/sdk/index.js",
+  "types": "../../dist/packages/sdk/index.d.ts",
+  "private": true,
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "tsc --build --clean"
+  }
+}

@@ -88,7 +88,7 @@ describe('ConsumerService', () => {
 
       expect(executionService.startExecution).toHaveBeenCalledWith('job-100');
       expect(handlerRegistry.getHandler).toHaveBeenCalledWith('EMAIL');
-      expect(mockHandler.execute).toHaveBeenCalledWith(envelope.payload);
+      expect(mockHandler.execute).toHaveBeenCalledWith(envelope.payload, 'job-100');
       expect(executionService.completeExecution).toHaveBeenCalledWith('exec-1', 'job-100');
       expect(mockChannel.ack).toHaveBeenCalledWith(msg);
     });

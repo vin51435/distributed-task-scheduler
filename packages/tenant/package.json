@@ -1,0 +1,11 @@
+{
+  "name": "@scheduler-platform/tenant",
+  "version": "0.1.0",
+  "main": "../../dist/packages/tenant/index.js",
+  "types": "../../dist/packages/tenant/index.d.ts",
+  "private": true,
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "tsc --build --clean"
+  }
+}

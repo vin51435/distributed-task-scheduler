@@ -14,6 +14,6 @@ describe('NoopHandler', () => {
   it('should execute successfully', async () => {
     const spyLog = jest.spyOn((handler as any).logger, 'log');
     await handler.execute({ foo: 'bar' });
-    expect(spyLog).toHaveBeenCalledWith(expect.stringContaining('Executing NoopHandler'));
+    expect(spyLog).toHaveBeenCalledWith(expect.stringContaining('NoopHandler executed'));
   });
 });

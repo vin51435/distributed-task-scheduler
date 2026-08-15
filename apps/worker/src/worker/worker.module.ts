@@ -1,25 +1,17 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ExecutionEntity, JobEntity, JobEffectEntity } from '@scheduler/database';
-import { EmailHandler } from './handlers/email.handler';
-import { WebhookHandler } from './handlers/webhook.handler';
-import { NoopHandler } from './handlers/noop.handler';
-import { HandlerRegistry } from './handler.registry';
+import { HandlersModule } from '@scheduler-platform/handlers';
 import { ExecutionRepository } from './execution.repository';
 import { ExecutionService } from './execution.service';
 import { ConsumerService } from './consumer.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ExecutionEntity, JobEntity, JobEffectEntity])],
-  providers: [
-    EmailHandler,
-    WebhookHandler,
-    NoopHandler,
-    HandlerRegistry,
-    ExecutionRepository,
-    ExecutionService,
-    ConsumerService,
+  imports: [
+    TypeOrmModule.forFeature([ExecutionEntity, JobEntity, JobEffectEntity]),
+    HandlersModule,
   ],
-  exports: [ExecutionService, HandlerRegistry],
+  providers: [ExecutionRepository, ExecutionService, ConsumerService],
+  exports: [ExecutionService, HandlersModule],
 })
 export class WorkerModule {}
