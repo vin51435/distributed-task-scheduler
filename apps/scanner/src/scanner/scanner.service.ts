@@ -204,8 +204,8 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
           return { scannedSchedules: 0, jobsCreated: 0, claimedBuckets: [] };
         }
 
-        this.logger.log(
-          `[Bucket Lease] Instance ${this.instanceId} claimed ${targetBuckets.length} bucket(s) (active nodes: ${activeInstances}): [${targetBuckets.slice(0, 5).join(', ')}${targetBuckets.length > 5 ? '...' : ''}]`,
+        this.logger.debug(
+          `[Bucket Lease] Instance ${this.instanceId} claimed ${targetBuckets.length} bucket(s) (active nodes: ${activeInstances})`,
         );
       }
 
@@ -215,9 +215,16 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
         this.batchSize,
         targetBuckets,
       );
-      this.logger.log(
-        `Instance ${this.instanceId} found ${dueSchedules.length} due schedule(s) at ${now.toISOString()}`,
-      );
+
+      if (dueSchedules.length > 0) {
+        this.logger.log(
+          `Instance ${this.instanceId} found ${dueSchedules.length} due schedule(s) at ${now.toISOString()}`,
+        );
+      } else {
+        this.logger.debug(
+          `Instance ${this.instanceId} found 0 due schedules at ${now.toISOString()}`,
+        );
+      }
 
       for (const schedule of dueSchedules) {
         try {
