@@ -1,6 +1,6 @@
 export interface UserSession {
   id: string;
-  email: string;
+  email?: string;
   tenantId: string;
   roles: string[];
   permissions: string[];

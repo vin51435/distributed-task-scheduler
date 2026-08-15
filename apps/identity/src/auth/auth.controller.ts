@@ -6,6 +6,7 @@ import { LoginDto, RefreshTokenDto, ChangePasswordDto } from './dto/login.dto';
 import { Public, CurrentUser, AuthGuard } from '@scheduler-platform/auth';
 
 @ApiTags('auth')
+@UseGuards(AuthGuard)
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

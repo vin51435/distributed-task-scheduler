@@ -10,25 +10,30 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  - job_name: 'scheduler'
+  - job_name: 'identity'
     metrics_path: '/api/metrics'
     static_configs:
       - targets: ['host.docker.internal:3001']
 
-  - job_name: 'scanner'
+  - job_name: 'scheduler'
     metrics_path: '/api/metrics'
     static_configs:
       - targets: ['host.docker.internal:3002']
 
-  - job_name: 'dispatcher'
+  - job_name: 'scanner'
     metrics_path: '/api/metrics'
     static_configs:
       - targets: ['host.docker.internal:3003']
 
-  - job_name: 'worker'
+  - job_name: 'dispatcher'
     metrics_path: '/api/metrics'
     static_configs:
       - targets: ['host.docker.internal:3004']
+
+  - job_name: 'worker'
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3005']
 
   - job_name: 'rabbitmq'
     static_configs:

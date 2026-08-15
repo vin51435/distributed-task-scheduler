@@ -263,6 +263,9 @@ export class AuthService {
    * Changes user password.
    */
   async changePassword(userId: string, dto: ChangePasswordDto) {
+    if (!userId) {
+      throw new UnauthorizedException('Authentication required: user ID not provided');
+    }
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -286,6 +289,9 @@ export class AuthService {
    * Fetches user profile with roles and permissions.
    */
   async getProfile(userId: string) {
+    if (!userId) {
+      throw new UnauthorizedException('Authentication required: user ID not provided');
+    }
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 

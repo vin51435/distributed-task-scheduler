@@ -20,6 +20,6 @@ export function createTypeOrmConfig(options?: DatabaseConnectionOptions): TypeOr
     database: options?.database || process.env.POSTGRES_DB || 'scheduler_db',
     entities: options?.entities || [],
     synchronize: options?.synchronize ?? process.env.NODE_ENV !== 'production',
-    logging: process.env.NODE_ENV === 'development',
+    logging: process.env.DB_LOGGING === 'true' ? true : ['error', 'warn'],
   };
 }

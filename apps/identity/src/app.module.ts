@@ -16,6 +16,7 @@ import { AuthModule } from '@scheduler-platform/auth';
 import { TenantModule } from '@scheduler-platform/tenant';
 import { RateLimiterModule } from '@scheduler-platform/rate-limiter';
 import { AppLoggerModule } from '@scheduler-platform/logger';
+import { MetricsModule } from '@scheduler-platform/metrics';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { TenantsController } from './tenants/tenants.controller';
@@ -56,6 +57,7 @@ import { HealthController } from './health/health.controller';
     AuthModule,
     TenantModule,
     RateLimiterModule,
+    MetricsModule,
   ],
   controllers: [
     AuthController,
