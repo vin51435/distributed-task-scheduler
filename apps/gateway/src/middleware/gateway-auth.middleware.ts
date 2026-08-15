@@ -24,11 +24,13 @@ export class GatewayAuthMiddleware implements NestMiddleware {
     res.setHeader('x-correlation-id', correlationId);
 
     // 2. Bypass public paths
-    const path = req.path.toLowerCase();
+    const rawPath = (req.originalUrl || req.url || req.path || '').toLowerCase();
+    const path = rawPath.split('?')[0];
     if (
       path.startsWith('/health') ||
       path.startsWith('/docs') ||
       path.startsWith('/api-json') ||
+      path.startsWith('/favicon.ico') ||
       path === '/api/auth/register' ||
       path === '/api/auth/login' ||
       path === '/api/auth/refresh' ||

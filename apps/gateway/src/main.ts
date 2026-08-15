@@ -28,14 +28,23 @@ async function bootstrap() {
     .setVersion('1.0.0')
     .addBearerAuth()
     .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'x-api-key')
-    .addTag('gateway-proxy')
     .addTag('health')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document, {
     swaggerOptions: {
+      urls: [
+        { url: '/docs/spec/unified', name: '⚡ All Services (Unified)' },
+        { url: '/docs/spec/identity', name: '🔐 Identity Service' },
+        { url: '/docs/spec/scheduler', name: '⏱️ Scheduler Service' },
+        { url: '/docs/spec/dispatcher', name: '🚀 Dispatcher Service' },
+      ],
+      'urls.primaryName': '⚡ All Services (Unified)',
       displayRequestDuration: true,
+      docExpansion: 'list',
+      filter: true,
+      persistAuthorization: true,
     },
   });
 

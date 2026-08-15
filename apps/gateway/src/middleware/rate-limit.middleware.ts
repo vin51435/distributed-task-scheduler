@@ -7,8 +7,14 @@ export class GatewayRateLimitMiddleware implements NestMiddleware {
   constructor(private readonly rateLimiter: TokenBucketRateLimiterService) {}
 
   async use(req: Request & { tenantId?: string }, res: Response, next: NextFunction) {
-    const path = req.path.toLowerCase();
-    if (path.startsWith('/health') || path.startsWith('/docs')) {
+    const rawPath = (req.originalUrl || req.url || req.path || '').toLowerCase();
+    const path = rawPath.split('?')[0];
+    if (
+      path.startsWith('/health') ||
+      path.startsWith('/docs') ||
+      path.startsWith('/api-json') ||
+      path.startsWith('/favicon.ico')
+    ) {
       return next();
     }
 

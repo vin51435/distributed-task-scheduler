@@ -1,9 +1,9 @@
 import { All, Controller, Req, Res } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { ProxyService } from './proxy.service';
 
-@ApiTags('gateway-proxy')
+@ApiExcludeController()
 @Controller()
 export class ProxyController {
   constructor(private readonly proxyService: ProxyService) {}

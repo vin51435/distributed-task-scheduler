@@ -8,8 +8,15 @@ import { HealthController } from './health/health.controller';
 import { GatewayAuthMiddleware } from './middleware/gateway-auth.middleware';
 import { GatewayRateLimitMiddleware } from './middleware/rate-limit.middleware';
 
+import { DocsModule } from './docs/docs.module';
+
 @Module({
-  imports: [AppLoggerModule.forRoot({ serviceName: 'api-gateway' }), AuthModule, RateLimiterModule],
+  imports: [
+    AppLoggerModule.forRoot({ serviceName: 'api-gateway' }),
+    AuthModule,
+    RateLimiterModule,
+    DocsModule,
+  ],
   controllers: [ProxyController, HealthController],
   providers: [ProxyService],
 })
