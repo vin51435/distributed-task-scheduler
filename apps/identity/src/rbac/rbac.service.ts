@@ -1,11 +1,6 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, IsNull } from 'typeorm';
 import {
   RoleEntity,
   PermissionEntity,
@@ -34,8 +29,11 @@ export class RbacService {
   ) {}
 
   async listRoles(tenantId: string) {
+    const whereConditions = tenantId
+      ? [{ tenantId }, { tenantId: IsNull() }]
+      : [{ tenantId: IsNull() }];
     return this.roleRepo.find({
-      where: [{ tenantId }, { tenantId: undefined }],
+      where: whereConditions,
     });
   }
 
@@ -111,11 +109,14 @@ export class RbacService {
     );
 
     const targetRoleName = dto.roleName ? dto.roleName.toUpperCase() : 'VIEWER';
+    const roleWhere = tenantId
+      ? [
+          { name: targetRoleName, tenantId },
+          { name: targetRoleName, tenantId: IsNull() },
+        ]
+      : [{ name: targetRoleName, tenantId: IsNull() }];
     const role = await this.roleRepo.findOne({
-      where: [
-        { name: targetRoleName, tenantId },
-        { name: targetRoleName, tenantId: undefined },
-      ],
+      where: roleWhere,
     });
 
     if (role) {
@@ -140,11 +141,14 @@ export class RbacService {
     const user = await this.userRepo.findOne({ where: { id: userId, tenantId } });
     if (!user) throw new NotFoundException('User not found in this tenant');
 
+    const roleWhere = tenantId
+      ? [
+          { id: dto.roleId, tenantId },
+          { id: dto.roleId, tenantId: IsNull() },
+        ]
+      : [{ id: dto.roleId, tenantId: IsNull() }];
     const role = await this.roleRepo.findOne({
-      where: [
-        { id: dto.roleId, tenantId },
-        { id: dto.roleId, tenantId: undefined },
-      ],
+      where: roleWhere,
     });
     if (!role) throw new NotFoundException('Role not found');
 
