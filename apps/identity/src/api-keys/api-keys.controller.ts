@@ -15,22 +15,20 @@ import { CreateApiKeyDto, ValidateApiKeyDto } from './dto/api-key.dto';
 import { CurrentTenant, Roles, Public, AuthGuard, RbacGuard } from '@scheduler-platform/auth';
 
 @ApiTags('api-keys')
+@ApiBearerAuth()
+@UseGuards(AuthGuard, RbacGuard)
 @Controller('api-keys')
 export class ApiKeysController {
   constructor(private readonly apiKeysService: ApiKeysService) {}
 
   @Post()
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard, RbacGuard)
   @Roles('OWNER', 'ADMIN')
-  @ApiOperation({ summary: 'Generate a new scoped API Key' })
+  @ApiOperation({ summary: 'Generate a new scoped API Key for tenant' })
   async createApiKey(@CurrentTenant() tenantId: string, @Body() dto: CreateApiKeyDto) {
     return this.apiKeysService.createApiKey(tenantId, dto);
   }
 
   @Get()
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard, RbacGuard)
   @Roles('OWNER', 'ADMIN')
   @ApiOperation({ summary: 'List all active API Keys for tenant' })
   async listApiKeys(@CurrentTenant() tenantId: string) {
@@ -38,8 +36,6 @@ export class ApiKeysController {
   }
 
   @Delete(':id')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard, RbacGuard)
   @Roles('OWNER', 'ADMIN')
   @ApiOperation({ summary: 'Revoke an API Key' })
   async revokeApiKey(@CurrentTenant() tenantId: string, @Param('id') id: string) {

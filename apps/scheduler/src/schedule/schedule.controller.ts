@@ -9,15 +9,16 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
-  Headers,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { CurrentTenant } from '@scheduler-platform/auth';
 import { ScheduleService } from './schedule.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { ScheduleResponseDto } from './responses/schedule.response.dto';
 
 @ApiTags('schedules')
+@ApiBearerAuth()
 @Controller('schedules')
 export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}
@@ -32,7 +33,7 @@ export class ScheduleController {
   @ApiResponse({ status: 400, description: 'Invalid input data or validation error' })
   async create(
     @Body() createScheduleDto: CreateScheduleDto,
-    @Headers('x-tenant-id') tenantId?: string,
+    @CurrentTenant() tenantId?: string,
   ): Promise<ScheduleResponseDto> {
     const entity = await this.scheduleService.createSchedule(createScheduleDto, tenantId);
     return ScheduleResponseDto.fromEntity(entity);
@@ -41,7 +42,7 @@ export class ScheduleController {
   @Post('batch')
   @ApiOperation({ summary: 'Batch create up to 1000 schedules in a single transaction' })
   @ApiResponse({ status: 201, description: 'Schedules created in batch' })
-  async createBatch(@Body() dtos: CreateScheduleDto[], @Headers('x-tenant-id') tenantId?: string) {
+  async createBatch(@Body() dtos: CreateScheduleDto[], @CurrentTenant() tenantId?: string) {
     const result = await this.scheduleService.createBatchSchedules(dtos, tenantId);
     return {
       created: result.created,
@@ -52,7 +53,7 @@ export class ScheduleController {
   @Get()
   @ApiOperation({ summary: 'Get all schedules' })
   @ApiResponse({ status: 200, description: 'List of all schedules', type: [ScheduleResponseDto] })
-  async findAll(@Headers('x-tenant-id') tenantId?: string): Promise<ScheduleResponseDto[]> {
+  async findAll(@CurrentTenant() tenantId?: string): Promise<ScheduleResponseDto[]> {
     const entities = await this.scheduleService.getSchedules(tenantId);
     return entities.map(ScheduleResponseDto.fromEntity);
   }

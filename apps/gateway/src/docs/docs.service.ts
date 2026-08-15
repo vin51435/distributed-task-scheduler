@@ -73,6 +73,7 @@ export class DocsService {
 
     // Ensure server points to gateway so requests proxy properly
     spec.servers = [{ url: '/', description: 'API Gateway Proxy' }];
+    this.sanitizeSpecParameters(spec);
     return spec;
   }
 
@@ -169,6 +170,7 @@ export class DocsService {
         }
       }
 
+      this.sanitizeSpecParameters(unified);
       return unified;
     } catch (err: any) {
       this.logger.error(`Error generating unified OpenAPI spec: ${err.message}`, err.stack);
@@ -182,6 +184,32 @@ export class DocsService {
         servers: [{ url: '/', description: 'API Gateway' }],
         paths: {},
       };
+    }
+  }
+
+  /**
+   * Sanitizes operation parameters so that x-tenant-id is never marked as required in Swagger UI.
+   */
+  private sanitizeSpecParameters(spec: any) {
+    if (!spec || !spec.paths) return;
+
+    for (const pathObj of Object.values(spec.paths) as any[]) {
+      for (const operation of Object.values(pathObj) as any[]) {
+        if (operation && Array.isArray(operation.parameters)) {
+          operation.parameters = operation.parameters.map((param: any) => {
+            if (param.name && param.name.toLowerCase() === 'x-tenant-id') {
+              return {
+                ...param,
+                required: false,
+                description:
+                  param.description ||
+                  'Tenant ID (optional: auto-resolved from Bearer token or API key)',
+              };
+            }
+            return param;
+          });
+        }
+      }
     }
   }
 }
