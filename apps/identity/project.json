@@ -16,11 +16,16 @@
         "main": "apps/identity/src/main.ts",
         "tsConfig": "apps/identity/tsconfig.app.json",
         "webpackConfig": "apps/identity/webpack.config.js",
+        "sourceMap": true,
         "assets": []
       },
       "configurations": {
-        "development": {},
-        "production": {}
+        "development": {
+          "sourceMap": true
+        },
+        "production": {
+          "sourceMap": true
+        }
       }
     },
     "serve": {

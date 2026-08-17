@@ -16,11 +16,16 @@
         "main": "apps/dispatcher/src/main.ts",
         "tsConfig": "apps/dispatcher/tsconfig.app.json",
         "webpackConfig": "apps/dispatcher/webpack.config.js",
+        "sourceMap": true,
         "assets": ["apps/dispatcher/src/assets"]
       },
       "configurations": {
-        "development": {},
-        "production": {}
+        "development": {
+          "sourceMap": true
+        },
+        "production": {
+          "sourceMap": true
+        }
       }
     },
     "serve": {

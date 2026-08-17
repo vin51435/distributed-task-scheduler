@@ -16,11 +16,16 @@
         "main": "apps/worker/src/main.ts",
         "tsConfig": "apps/worker/tsconfig.app.json",
         "webpackConfig": "apps/worker/webpack.config.js",
+        "sourceMap": true,
         "assets": ["apps/worker/src/assets"]
       },
       "configurations": {
-        "development": {},
-        "production": {}
+        "development": {
+          "sourceMap": true
+        },
+        "production": {
+          "sourceMap": true
+        }
       }
     },
     "serve": {

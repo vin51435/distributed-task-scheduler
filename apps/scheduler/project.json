@@ -16,11 +16,16 @@
         "main": "apps/scheduler/src/main.ts",
         "tsConfig": "apps/scheduler/tsconfig.app.json",
         "webpackConfig": "apps/scheduler/webpack.config.js",
+        "sourceMap": true,
         "assets": ["apps/scheduler/src/assets"]
       },
       "configurations": {
-        "development": {},
-        "production": {}
+        "development": {
+          "sourceMap": true
+        },
+        "production": {
+          "sourceMap": true
+        }
       }
     },
     "serve": {

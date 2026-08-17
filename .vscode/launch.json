@@ -10,6 +10,11 @@
       "autoAttachChildProcesses": true,
       "sourceMaps": true,
       "smartStep": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${workspaceFolder}/*",
+        "webpack:///*": "${workspaceFolder}/*"
+      },
       "preLaunchTask": "Start Infrastructure (Docker)",
       "postDebugTask": "Stop Infrastructure (Docker)",
       "console": "integratedTerminal"
@@ -22,6 +27,12 @@
       "runtimeArgs": ["nx", "serve", "identity"],
       "autoAttachChildProcesses": true,
       "sourceMaps": true,
+      "smartStep": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${workspaceFolder}/*",
+        "webpack:///*": "${workspaceFolder}/*"
+      },
       "console": "integratedTerminal"
     },
     {
@@ -32,6 +43,12 @@
       "runtimeArgs": ["nx", "serve", "gateway"],
       "autoAttachChildProcesses": true,
       "sourceMaps": true,
+      "smartStep": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${workspaceFolder}/*",
+        "webpack:///*": "${workspaceFolder}/*"
+      },
       "console": "integratedTerminal"
     },
     {
@@ -42,6 +59,12 @@
       "runtimeArgs": ["nx", "serve", "scheduler"],
       "autoAttachChildProcesses": true,
       "sourceMaps": true,
+      "smartStep": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${workspaceFolder}/*",
+        "webpack:///*": "${workspaceFolder}/*"
+      },
       "console": "integratedTerminal"
     },
     {
@@ -52,6 +75,12 @@
       "runtimeArgs": ["nx", "serve", "worker"],
       "autoAttachChildProcesses": true,
       "sourceMaps": true,
+      "smartStep": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${workspaceFolder}/*",
+        "webpack:///*": "${workspaceFolder}/*"
+      },
       "console": "integratedTerminal"
     },
     {
@@ -62,6 +91,12 @@
       "runtimeArgs": ["nx", "serve", "dispatcher"],
       "autoAttachChildProcesses": true,
       "sourceMaps": true,
+      "smartStep": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${workspaceFolder}/*",
+        "webpack:///*": "${workspaceFolder}/*"
+      },
       "console": "integratedTerminal"
     }
   ]
