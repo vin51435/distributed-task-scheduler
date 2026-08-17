@@ -8,6 +8,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
+import { DocsService } from './docs/docs.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -32,6 +33,9 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
+  const docsService = app.get(DocsService);
+  docsService.setGatewayBaseDoc(document);
+
   SwaggerModule.setup('docs', app, document, {
     swaggerOptions: {
       urls: [
@@ -39,6 +43,7 @@ async function bootstrap() {
         { url: '/docs/spec/identity', name: '🔐 Identity Service' },
         { url: '/docs/spec/scheduler', name: '⏱️ Scheduler Service' },
         { url: '/docs/spec/dispatcher', name: '🚀 Dispatcher Service' },
+        { url: '/docs/spec/gateway', name: '🌐 Gateway Service' },
       ],
       'urls.primaryName': '⚡ All Services (Unified)',
       displayRequestDuration: true,

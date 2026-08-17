@@ -10,6 +10,11 @@ export interface ServiceSpecConfig {
 @Injectable()
 export class DocsService {
   private readonly logger = new Logger(DocsService.name);
+  private gatewayBaseDoc: any = null;
+
+  public setGatewayBaseDoc(doc: any) {
+    this.gatewayBaseDoc = doc;
+  }
 
   private readonly services: ServiceSpecConfig[] = [
     {
@@ -49,6 +54,12 @@ export class DocsService {
    * Returns individual service spec by key.
    */
   async getServiceSpec(serviceKey: string): Promise<any> {
+    if (serviceKey.toLowerCase() === 'gateway') {
+      if (this.gatewayBaseDoc) {
+        return this.gatewayBaseDoc;
+      }
+    }
+
     const service = this.services.find((s) => s.key === serviceKey.toLowerCase());
     if (!service) {
       return {
@@ -81,6 +92,7 @@ export class DocsService {
    * Merges all downstream OpenAPI specifications into a single unified specification.
    */
   async getUnifiedSpec(gatewayBaseDoc?: any): Promise<any> {
+    const baseDoc = gatewayBaseDoc || this.gatewayBaseDoc;
     try {
       const results = await Promise.all(
         this.services.map(async (service) => {
@@ -102,7 +114,12 @@ export class DocsService {
           version: '1.0.0',
         },
         servers: [{ url: '/', description: 'API Gateway' }],
-        tags: [],
+        tags: [
+          {
+            name: 'health',
+            description: 'Gateway and microservice health check endpoints',
+          },
+        ],
         paths: {},
         components: {
           schemas: {},
@@ -123,17 +140,52 @@ export class DocsService {
         },
       };
 
-      // 1. Merge Gateway local paths (e.g. /health) if provided
-      if (gatewayBaseDoc) {
-        if (gatewayBaseDoc.tags) {
-          unified.tags.push(...gatewayBaseDoc.tags);
+      // 1. Merge Gateway local paths (e.g. /health, /health/services)
+      if (baseDoc) {
+        if (baseDoc.tags) {
+          for (const tag of baseDoc.tags) {
+            if (!unified.tags.some((t: any) => t.name === tag.name)) {
+              unified.tags.push(tag);
+            }
+          }
         }
-        if (gatewayBaseDoc.paths) {
-          Object.assign(unified.paths, gatewayBaseDoc.paths);
+        if (baseDoc.paths) {
+          Object.assign(unified.paths, baseDoc.paths);
         }
-        if (gatewayBaseDoc.components?.schemas) {
-          Object.assign(unified.components.schemas, gatewayBaseDoc.components.schemas);
+        if (baseDoc.components?.schemas) {
+          Object.assign(unified.components.schemas, baseDoc.components.schemas);
         }
+      }
+
+      // Ensure /health endpoints are always present
+      if (!unified.paths['/health']) {
+        unified.paths['/health'] = {
+          get: {
+            tags: ['health'],
+            summary: 'Gateway Health check endpoint',
+            description: 'Returns health status and uptime of the API Gateway',
+            responses: {
+              200: {
+                description: 'API Gateway is healthy',
+              },
+            },
+          },
+        };
+      }
+
+      if (!unified.paths['/health/services']) {
+        unified.paths['/health/services'] = {
+          get: {
+            tags: ['health'],
+            summary: 'Multi-service Ecosystem Health check',
+            description: 'Live connectivity status of all downstream microservices',
+            responses: {
+              200: {
+                description: 'Live connectivity status of all microservices',
+              },
+            },
+          },
+        };
       }
 
       // 2. Merge each downstream service spec

@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadGatewayException, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, HttpStatus } from '@nestjs/common';
 import axios, { AxiosRequestConfig, Method } from 'axios';
 import { Request, Response } from 'express';
 
