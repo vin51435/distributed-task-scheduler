@@ -12,6 +12,7 @@ import {
 import { MetricsModule } from '@scheduler-platform/metrics';
 import { ScheduleModule } from './schedule/schedule.module';
 import { AdminModule } from './admin/admin.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AdminModule } from './admin/admin.module';
     MetricsModule,
     ScheduleModule,
     AdminModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
