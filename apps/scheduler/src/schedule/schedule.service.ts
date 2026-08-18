@@ -18,6 +18,7 @@ import {
   TenantLimitsEntity,
 } from '@scheduler/database';
 import { calculateBucket } from '@scheduler/redis';
+import { MetricsService } from '@scheduler-platform/metrics';
 
 @Injectable()
 export class ScheduleService {
@@ -26,6 +27,8 @@ export class ScheduleService {
     @Optional()
     @InjectRepository(TenantLimitsEntity)
     private readonly limitsRepo?: Repository<TenantLimitsEntity>,
+    @Optional()
+    private readonly metricsService?: MetricsService,
   ) {}
 
   async createSchedule(dto: CreateScheduleDto, tenantId?: string): Promise<ScheduleEntity> {
@@ -35,7 +38,9 @@ export class ScheduleService {
     }
 
     const entityData = this.prepareScheduleEntity(dto, effectiveTenantId);
-    return this.scheduleRepository.create(entityData);
+    const created = await this.scheduleRepository.create(entityData);
+    this.metricsService?.schedulerRequestsTotal.inc({ method: 'POST', status: '201' });
+    return created;
   }
 
   async createBatchSchedules(

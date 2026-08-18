@@ -9,6 +9,7 @@ import {
   BucketService,
   HeartbeatService,
 } from '@scheduler/redis';
+import { MetricsService } from '@scheduler-platform/metrics';
 import { ScannerRepository } from './scanner.repository';
 
 export enum ScannerMode {
@@ -60,6 +61,7 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly leaderService?: LeaderElectionService,
     @Optional() private readonly bucketService?: BucketService,
     @Optional() private readonly heartbeatService?: HeartbeatService,
+    @Optional() private readonly metricsService?: MetricsService,
   ) {
     this.instanceId =
       this.configService?.get<string>('SCANNER_INSTANCE_ID') || `scanner-${randomUUID()}`;
@@ -273,6 +275,12 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
       this.totalScans++;
       this.totalJobsCreated += jobsCreatedCount;
       this.lastScanTime = new Date();
+
+      if (jobsCreatedCount > 0) {
+        this.metricsService?.scannerJobsCreatedTotal.inc(jobsCreatedCount);
+      }
+      this.metricsService?.scannerScanDuration.set((Date.now() - now.getTime()) / 1000);
+      this.metricsService?.scannerBucketOwnership.set(this.claimedBuckets.length);
 
       return {
         scannedSchedules: dueSchedules.length,

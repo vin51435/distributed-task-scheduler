@@ -7,6 +7,7 @@ import { IdempotencyService, HeartbeatService, RateLimiterService } from '@sched
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
 import { HandlerRegistry } from '@scheduler-platform/handlers';
 import { ExecutionService } from './execution.service';
+import { MetricsService } from '@scheduler-platform/metrics';
 
 export interface JobMessageEnvelope {
   jobId: string;
@@ -33,6 +34,7 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly idempotencyService?: IdempotencyService,
     @Optional() private readonly heartbeatService?: HeartbeatService,
     @Optional() private readonly rateLimiterService?: RateLimiterService,
+    @Optional() private readonly metricsService?: MetricsService,
   ) {}
 
   onModuleInit() {
@@ -226,17 +228,23 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
     const maxAttempts = existingJob.maxAttempts || 5;
     const retryPolicy = existingJob.retryPolicy || RetryPolicy.EXPONENTIAL_BACKOFF;
 
+    this.metricsService?.workerRunningJobs.inc();
+    const endDurationTimer = this.metricsService?.workerExecutionDuration.startTimer();
+
     // 7. Run Job Handler Execution
     try {
       const handler = this.handlerRegistry.getHandler(workerType);
       await handler.execute(envelope.payload || {}, envelope.jobId);
 
       await this.executionService.completeExecution(execution.id, envelope.jobId);
+      this.metricsService?.workerSuccessTotal.inc({ worker_type: workerType });
       channel.ack(msg);
     } catch (err: any) {
       const errorMessage = err.message || String(err);
       const stackTrace = err.stack;
       const retryable = isRetryableError(err);
+
+      this.metricsService?.workerFailureTotal.inc({ worker_type: workerType });
 
       this.logger.error(
         `Error executing handler for job ${envelope.jobId} (attempt ${currentAttempt}/${maxAttempts}, retryable: ${retryable}): ${errorMessage}`,
@@ -269,6 +277,7 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
           payload: envelope.payload,
         });
 
+        this.metricsService?.workerDlqTotal.inc();
         channel.ack(msg);
       } else {
         const nextRetryAt =
@@ -289,9 +298,12 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
           await this.idempotencyService.clear(`idempotency:worker:${envelope.jobId}`);
         }
 
+        this.metricsService?.workerRetryTotal.inc();
         channel.ack(msg);
       }
     } finally {
+      this.metricsService?.workerRunningJobs.dec();
+      endDurationTimer?.();
       if (heartbeatTimer) {
         clearInterval(heartbeatTimer);
       }
