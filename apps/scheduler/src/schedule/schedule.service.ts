@@ -32,6 +32,7 @@ export class ScheduleService {
   ) {}
 
   async createSchedule(dto: CreateScheduleDto, tenantId?: string): Promise<ScheduleEntity> {
+    const startTime = Date.now();
     const effectiveTenantId = dto.tenantId || tenantId;
     if (effectiveTenantId && this.limitsRepo) {
       await this.enforceScheduleQuota(effectiveTenantId, 1);
@@ -40,6 +41,7 @@ export class ScheduleService {
     const entityData = this.prepareScheduleEntity(dto, effectiveTenantId);
     const created = await this.scheduleRepository.create(entityData);
     this.metricsService?.schedulerRequestsTotal.inc({ method: 'POST', status: '201' });
+    this.metricsService?.schedulerCreationLatency.observe(Date.now() - startTime);
     return created;
   }
 
@@ -47,6 +49,7 @@ export class ScheduleService {
     dtos: CreateScheduleDto[],
     tenantId?: string,
   ): Promise<{ created: number; schedules: ScheduleEntity[] }> {
+    const startTime = Date.now();
     if (!dtos || dtos.length === 0) {
       throw new BadRequestException('Schedule batch must contain at least 1 item');
     }
@@ -61,6 +64,11 @@ export class ScheduleService {
 
     const entitiesData = dtos.map((dto) => this.prepareScheduleEntity(dto, effectiveTenantId));
     const saved = await this.scheduleRepository.createMany(entitiesData);
+    this.metricsService?.schedulerRequestsTotal.inc(
+      { method: 'POST', status: '201' },
+      saved.length,
+    );
+    this.metricsService?.schedulerCreationLatency.observe(Date.now() - startTime);
 
     return {
       created: saved.length,
