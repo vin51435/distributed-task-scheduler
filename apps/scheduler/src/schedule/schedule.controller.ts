@@ -9,8 +9,16 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  ParseArrayPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+  ApiBody,
+} from '@nestjs/swagger';
 import { CurrentTenant } from '@scheduler-platform/auth';
 import { ScheduleService } from './schedule.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
@@ -41,8 +49,67 @@ export class ScheduleController {
 
   @Post('batch')
   @ApiOperation({ summary: 'Batch create up to 1000 schedules in a single transaction' })
+  @ApiBody({
+    type: [CreateScheduleDto],
+    description: 'Array of schedule definitions to create',
+    examples: {
+      default: {
+        summary: 'Batch Schedules Example',
+        value: [
+          {
+            name: 'Batch Welcome Email',
+            type: 'ONE_OFF',
+            executeAt: '2026-08-15T17:05:44.000Z',
+            workerType: 'EMAIL',
+            priority: 100,
+            payload: {
+              to: 'customer1@example.com',
+              subject: 'Welcome to Acme',
+              body: 'Hello from Distributed Scheduler!',
+            },
+          },
+          {
+            name: 'Batch Webhook Sync',
+            type: 'ONE_OFF',
+            executeAt: '2026-08-15T17:05:44.000Z',
+            workerType: 'WEBHOOK',
+            priority: 80,
+            payload: {
+              url: 'https://httpbin.org/post',
+              data: { event: 'user.created' },
+            },
+          },
+          {
+            name: 'Batch AI Summarization',
+            type: 'CRON',
+            cron: '0 */4 * * *',
+            workerType: 'AI',
+            priority: 50,
+            payload: {
+              model: 'gpt-4o',
+              prompt: 'Generate daily report',
+            },
+          },
+        ],
+      },
+    },
+  })
   @ApiResponse({ status: 201, description: 'Schedules created in batch' })
-  async createBatch(@Body() dtos: CreateScheduleDto[], @CurrentTenant() tenantId?: string) {
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed on one or more schedule definitions',
+  })
+  async createBatch(
+    @Body(
+      new ParseArrayPipe({
+        items: CreateScheduleDto,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    )
+    dtos: CreateScheduleDto[],
+    @CurrentTenant() tenantId?: string,
+  ) {
     const result = await this.scheduleService.createBatchSchedules(dtos, tenantId);
     return {
       created: result.created,

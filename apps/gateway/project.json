@@ -32,7 +32,8 @@
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "gateway:build"
+        "buildTarget": "gateway:build",
+        "port": 9229
       },
       "configurations": {
         "development": {

@@ -32,7 +32,8 @@
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "identity:build"
+        "buildTarget": "identity:build",
+        "port": 9230
       },
       "configurations": {
         "development": {

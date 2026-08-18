@@ -32,7 +32,8 @@
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "dispatcher:build"
+        "buildTarget": "dispatcher:build",
+        "port": 9233
       },
       "configurations": {
         "development": {

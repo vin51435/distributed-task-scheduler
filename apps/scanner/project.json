@@ -32,7 +32,8 @@
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "scanner:build"
+        "buildTarget": "scanner:build",
+        "port": 9232
       },
       "configurations": {
         "development": {

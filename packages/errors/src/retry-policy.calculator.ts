@@ -1,4 +1,4 @@
-import { RetryPolicy } from '@scheduler/database';
+import { RetryPolicy } from '@scheduler-platform/database';
 
 /**
  * Calculates the timestamp for the next retry attempt based on the specified retry policy.

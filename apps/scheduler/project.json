@@ -32,7 +32,8 @@
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "scheduler:build"
+        "buildTarget": "scheduler:build",
+        "port": 9231
       },
       "configurations": {
         "development": {

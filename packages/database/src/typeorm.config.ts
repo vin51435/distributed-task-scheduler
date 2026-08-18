@@ -21,5 +21,10 @@ export function createTypeOrmConfig(options?: DatabaseConnectionOptions): TypeOr
     entities: options?.entities || [],
     synchronize: options?.synchronize ?? process.env.NODE_ENV !== 'production',
     logging: process.env.DB_LOGGING === 'true' ? true : ['error', 'warn'],
+    extra: {
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    },
   };
 }
