@@ -1,7 +1,6 @@
 import { Controller, Get, Res, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
-import { Public } from '@scheduler-platform/auth';
 import type { Response } from 'express';
 
 @ApiTags('health')
@@ -9,31 +8,29 @@ import type { Response } from 'express';
 export class HealthController {
   constructor(private readonly dataSource: DataSource) {}
 
-  @Public()
   @Get()
-  @ApiOperation({ summary: 'Standard Health check endpoint' })
-  check() {
+  @ApiOperation({ summary: 'Health check for Scanner Service' })
+  @ApiResponse({ status: 200, description: 'Service health status' })
+  async check() {
     return this.ready();
   }
 
-  @Public()
   @Get('live')
   @ApiOperation({ summary: 'Kubernetes Liveness probe (process is alive)' })
   @ApiResponse({ status: 200, description: 'Process is alive' })
   live() {
     return {
       status: 'ok',
-      service: 'identity-service',
+      service: 'scanner-service',
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
     };
   }
 
-  @Public()
   @Get('ready')
   @ApiOperation({ summary: 'Kubernetes Readiness probe (DB connected)' })
-  @ApiResponse({ status: 200, description: 'Identity service dependencies ready' })
-  @ApiResponse({ status: 503, description: 'Identity service dependencies unavailable' })
+  @ApiResponse({ status: 200, description: 'Scanner dependencies ready' })
+  @ApiResponse({ status: 503, description: 'Scanner dependencies unavailable' })
   async ready(@Res({ passthrough: true }) res?: Response) {
     let dbStatus = 'disconnected';
     let isReady = false;
@@ -55,7 +52,7 @@ export class HealthController {
 
     return {
       status: isReady ? 'ok' : 'error',
-      service: 'identity-service',
+      service: 'scanner-service',
       checks: {
         database: dbStatus,
       },

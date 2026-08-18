@@ -7,6 +7,8 @@ initTracing('api-gateway');
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
+import helmet from 'helmet';
+import * as express from 'express';
 import { GlobalExceptionFilter } from '@scheduler-platform/errors';
 import { AppModule } from './app.module';
 import { DocsService } from './docs/docs.service';
@@ -17,12 +19,44 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
   app.useGlobalFilters(new GlobalExceptionFilter());
 
+  // 1. Security Headers (Helmet)
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Permissive for interactive Swagger UI rendering
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
+
+  // 2. Request payload body limits (prevent payload bombing / DoS)
+  app.use(express.json({ limit: process.env.REQUEST_SIZE_LIMIT || '1mb' }));
+  app.use(express.urlencoded({ extended: true, limit: process.env.REQUEST_SIZE_LIMIT || '1mb' }));
+
+  // 3. CORS Policy Configuration
+  const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+    : '*';
+
   app.enableCors({
-    origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: '*',
+    origin: allowedOrigins,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'x-api-key',
+      'x-tenant-id',
+      'x-request-id',
+      'x-correlation-id',
+    ],
+    exposedHeaders: [
+      'X-RateLimit-Limit',
+      'X-RateLimit-Remaining',
+      'X-RateLimit-Reset',
+      'x-request-id',
+    ],
+    credentials: true,
   });
 
+  // 4. OpenAPI / Swagger Setup
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Distributed Task Scheduler API Gateway')
     .setDescription(

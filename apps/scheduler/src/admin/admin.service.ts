@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -81,10 +81,16 @@ export class AdminService {
     return this.searchJobs({ status, tenantId, page, limit });
   }
 
-  async getExecutions(jobId?: string, page = 1, limit = 20) {
+  async getExecutions(jobId?: string, page = 1, limit = 20, tenantId?: string) {
     const query = this.executionRepo.createQueryBuilder('exec');
     if (jobId) {
       query.andWhere('exec.job_id = :jobId', { jobId });
+    }
+
+    if (tenantId) {
+      query.innerJoin(JobEntity, 'j', 'j.id = exec.job_id').andWhere('j.tenant_id = :tenantId', {
+        tenantId,
+      });
     }
 
     const [executions, total] = await query
@@ -126,8 +132,11 @@ export class AdminService {
     };
   }
 
-  async retryJob(jobId: string) {
-    const job = await this.jobRepo.findOne({ where: { id: jobId } });
+  async retryJob(jobId: string, tenantId?: string) {
+    const where: any = { id: jobId };
+    if (tenantId) where.tenantId = tenantId;
+
+    const job = await this.jobRepo.findOne({ where });
     if (!job) {
       throw new NotFoundException(`Job ${jobId} not found`);
     }
@@ -154,8 +163,11 @@ export class AdminService {
     return { message: `Job ${jobId} reset to READY`, job };
   }
 
-  async cancelJob(jobId: string) {
-    const job = await this.jobRepo.findOne({ where: { id: jobId } });
+  async cancelJob(jobId: string, tenantId?: string) {
+    const where: any = { id: jobId };
+    if (tenantId) where.tenantId = tenantId;
+
+    const job = await this.jobRepo.findOne({ where });
     if (!job) {
       throw new NotFoundException(`Job ${jobId} not found`);
     }
@@ -178,13 +190,16 @@ export class AdminService {
     return { message: `Job ${jobId} cancelled`, job };
   }
 
-  async replayExecution(executionId: string) {
+  async replayExecution(executionId: string, tenantId?: string) {
     const execution = await this.executionRepo.findOne({ where: { id: executionId } });
     if (!execution) {
       throw new NotFoundException(`Execution ${executionId} not found`);
     }
 
-    const originalJob = await this.jobRepo.findOne({ where: { id: execution.jobId } });
+    const jobWhere: any = { id: execution.jobId };
+    if (tenantId) jobWhere.tenantId = tenantId;
+
+    const originalJob = await this.jobRepo.findOne({ where: jobWhere });
     if (!originalJob) {
       throw new NotFoundException(`Original Job ${execution.jobId} not found`);
     }
@@ -222,8 +237,11 @@ export class AdminService {
     };
   }
 
-  async pauseSchedule(scheduleId: string) {
-    const schedule = await this.scheduleRepo.findOne({ where: { id: scheduleId } });
+  async pauseSchedule(scheduleId: string, tenantId?: string) {
+    const where: any = { id: scheduleId };
+    if (tenantId) where.tenantId = tenantId;
+
+    const schedule = await this.scheduleRepo.findOne({ where });
     if (!schedule) {
       throw new NotFoundException(`Schedule ${scheduleId} not found`);
     }
@@ -234,7 +252,15 @@ export class AdminService {
     return { message: `Schedule ${scheduleId} paused`, schedule };
   }
 
-  async getJobAudit(jobId: string) {
+  async getJobAudit(jobId: string, tenantId?: string) {
+    const jobWhere: any = { id: jobId };
+    if (tenantId) jobWhere.tenantId = tenantId;
+
+    const job = await this.jobRepo.findOne({ where: jobWhere });
+    if (!job) {
+      throw new NotFoundException(`Job ${jobId} not found`);
+    }
+
     const dbAudits = await this.auditRepo.find({
       where: { jobId },
       order: { createdAt: 'ASC' },

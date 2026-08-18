@@ -1,4 +1,4 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 import { RetryPolicy } from './job.entity';
 
@@ -17,6 +17,8 @@ export enum ScheduleStatus {
 }
 
 @Entity({ name: 'schedules' })
+@Index('idx_schedules_due', ['bucket', 'nextExecuteAt'], { where: "status = 'ACTIVE'" })
+@Index('idx_schedules_tenant_status', ['tenantId', 'status', 'createdAt'])
 export class ScheduleEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   name!: string;

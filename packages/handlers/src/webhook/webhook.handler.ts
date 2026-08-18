@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JobHandler, JobExecutionPayload, ExecutionResult } from '../interface';
+import { validateWebhookUrl } from './ssrf-guard';
 
 @Injectable()
 export class WebhookHandler implements JobHandler {
@@ -29,6 +30,11 @@ export class WebhookHandler implements JobHandler {
         payload,
       )}`,
     );
+
+    // SSRF Security Guard: Validate destination URL if provided
+    if (payload?.url) {
+      await validateWebhookUrl(payload.url);
+    }
 
     if (payload?.delayMs) {
       await new Promise((resolve) => setTimeout(resolve, Number(payload.delayMs)));

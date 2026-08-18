@@ -1,4 +1,4 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
 export enum JobStatus {
@@ -20,6 +20,9 @@ export enum RetryPolicy {
 }
 
 @Entity({ name: 'jobs' })
+@Index('idx_jobs_dispatch', ['priority', 'executeAt'], { where: "status = 'READY'" })
+@Index('idx_jobs_tenant_status', ['tenantId', 'status', 'createdAt'])
+@Index('idx_jobs_schedule', ['scheduleId', 'status'])
 export class JobEntity extends BaseEntity {
   @Column({ type: 'uuid', name: 'schedule_id' })
   scheduleId!: string;

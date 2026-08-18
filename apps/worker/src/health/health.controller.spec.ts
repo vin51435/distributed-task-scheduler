@@ -30,19 +30,27 @@ describe('HealthController', () => {
     rabbitConnection = module.get(ConnectionService);
   });
 
-  it('should return ok when DB and RabbitMQ are connected', async () => {
-    const health = await controller.check();
+  it('should return liveness ok', () => {
+    const live = controller.live();
+    expect(live.status).toBe('ok');
+    expect(live.service).toBe('worker-service');
+  });
+
+  it('should return readiness ok when DB and RabbitMQ are connected', async () => {
+    const health = await controller.ready();
     expect(health.status).toBe('ok');
-    expect(health.details).toEqual({
+    expect(health.checks).toEqual({
       database: 'connected',
       rabbitmq: 'connected',
     });
   });
 
-  it('should return degraded when RabbitMQ is disconnected', async () => {
+  it('should return error when RabbitMQ is disconnected', async () => {
     rabbitConnection.getIsConnected.mockReturnValueOnce(false);
-    const health = await controller.check();
-    expect(health.status).toBe('degraded');
-    expect(health.details.rabbitmq).toBe('disconnected');
+    const res: any = { status: jest.fn() };
+    const health = await controller.ready(res);
+    expect(health.status).toBe('error');
+    expect(health.checks.rabbitmq).toBe('disconnected');
+    expect(res.status).toHaveBeenCalledWith(503);
   });
 });

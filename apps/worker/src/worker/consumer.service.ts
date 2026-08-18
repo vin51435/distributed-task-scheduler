@@ -25,6 +25,10 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ConsumerService.name);
   private isShuttingDown = false;
   private readonly instanceId = `worker-${randomUUID()}`;
+  private readonly maxConcurrency = Number(
+    process.env.WORKER_CONCURRENCY || process.env.WORKER_PREFETCH || 50,
+  );
+  private currentInFlight = 0;
 
   constructor(
     private readonly connectionService: ConnectionService,
@@ -71,6 +75,12 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
         const exchangeName = process.env.RABBITMQ_EXCHANGE || 'scheduler.exchange';
         const queueConfigs = WORKER_QUEUE_CONFIGS;
 
+        // Bounded Concurrency: Limit unacknowledged messages pushed by RabbitMQ broker
+        await channel.prefetch(this.maxConcurrency);
+        this.logger.log(
+          `Worker [${this.instanceId}] configured RabbitMQ channel prefetch: ${this.maxConcurrency}`,
+        );
+
         await channel.assertExchange(exchangeName, 'direct', { durable: true });
 
         for (const config of queueConfigs) {
@@ -108,6 +118,28 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
+    if (this.currentInFlight >= this.maxConcurrency) {
+      this.logger.warn(
+        `Worker [${this.instanceId}] at max concurrency (${this.currentInFlight}/${this.maxConcurrency}). NACKing message to requeue.`,
+      );
+      channel.nack(msg, false, true);
+      return;
+    }
+
+    this.currentInFlight++;
+    try {
+      await this.handleMessageExecution(channel, msg, dlqName, exchangeName);
+    } finally {
+      this.currentInFlight = Math.max(0, this.currentInFlight - 1);
+    }
+  }
+
+  private async handleMessageExecution(
+    channel: ConfirmChannel,
+    msg: ConsumeMessage,
+    dlqName: string,
+    exchangeName: string,
+  ): Promise<void> {
     let envelope: JobMessageEnvelope;
     const contentStr = msg.content.toString();
 
