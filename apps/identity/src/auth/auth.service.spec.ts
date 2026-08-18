@@ -6,6 +6,7 @@ import {
   TenantEntity,
   TenantLimitsEntity,
   RoleEntity,
+  PermissionEntity,
   UserRoleEntity,
   RolePermissionEntity,
   RefreshTokenEntity,
@@ -56,6 +57,11 @@ describe('AuthService', () => {
     rolePermRepo = {
       find: jest.fn().mockResolvedValue([]),
     };
+    const permRepo = {
+      findBy: jest.fn().mockResolvedValue([]),
+      findOne: jest.fn(),
+      save: jest.fn((e) => Promise.resolve(e)),
+    };
     refreshTokenRepo = {
       create: jest.fn((dto) => dto),
       save: jest.fn((entity) => Promise.resolve(entity)),
@@ -73,6 +79,7 @@ describe('AuthService', () => {
         { provide: getRepositoryToken(TenantEntity), useValue: tenantRepo },
         { provide: getRepositoryToken(TenantLimitsEntity), useValue: limitsRepo },
         { provide: getRepositoryToken(RoleEntity), useValue: roleRepo },
+        { provide: getRepositoryToken(PermissionEntity), useValue: permRepo },
         { provide: getRepositoryToken(UserRoleEntity), useValue: userRoleRepo },
         { provide: getRepositoryToken(RolePermissionEntity), useValue: rolePermRepo },
         { provide: getRepositoryToken(RefreshTokenEntity), useValue: refreshTokenRepo },

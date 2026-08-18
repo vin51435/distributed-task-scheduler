@@ -12,6 +12,7 @@ import {
   TenantEntity,
   TenantLimitsEntity,
   RoleEntity,
+  PermissionEntity,
   UserRoleEntity,
   RolePermissionEntity,
   RefreshTokenEntity,
@@ -39,6 +40,8 @@ export class AuthService {
     private readonly userRoleRepo: Repository<UserRoleEntity>,
     @InjectRepository(RolePermissionEntity)
     private readonly rolePermRepo: Repository<RolePermissionEntity>,
+    @InjectRepository(PermissionEntity)
+    private readonly permRepo: Repository<PermissionEntity>,
     @InjectRepository(RefreshTokenEntity)
     private readonly refreshTokenRepo: Repository<RefreshTokenEntity>,
     private readonly jwtService: JwtService,
@@ -341,6 +344,10 @@ export class AuthService {
       where: roleIds.map((roleId) => ({ roleId })),
     });
 
-    return rolePerms.map((rp) => rp.permissionId);
+    if (!rolePerms.length) return [];
+
+    const permIds = rolePerms.map((rp) => rp.permissionId);
+    const perms = await this.permRepo.findBy({ id: In(permIds) });
+    return perms.map((p: PermissionEntity) => p.action);
   }
 }
