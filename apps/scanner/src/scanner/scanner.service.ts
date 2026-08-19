@@ -2,13 +2,13 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Optional } from '@ne
 import { ConfigService } from '@nestjs/config';
 import { CronExpressionParser } from 'cron-parser';
 import { randomUUID } from 'crypto';
-import { ScheduleStatus, ScheduleType, JobStatus } from '@scheduler/database';
+import { ScheduleStatus, ScheduleType, JobStatus } from '@scheduler-platform/database';
 import {
   LockService,
   LeaderElectionService,
   BucketService,
   HeartbeatService,
-} from '@scheduler/redis';
+} from '@scheduler-platform/redis';
 import { MetricsService } from '@scheduler-platform/metrics';
 import { ScannerRepository } from './scanner.repository';
 

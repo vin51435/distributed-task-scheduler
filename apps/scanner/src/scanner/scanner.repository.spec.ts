@@ -7,7 +7,7 @@ import {
   ScheduleType,
   JobEntity,
   JobStatus,
-} from '@scheduler/database';
+} from '@scheduler-platform/database';
 import { ScannerRepository } from './scanner.repository';
 
 describe('ScannerRepository', () => {

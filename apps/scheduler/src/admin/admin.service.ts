@@ -8,7 +8,7 @@ import {
   ScheduleEntity,
   ScheduleStatus,
   JobAuditEntity,
-} from '@scheduler/database';
+} from '@scheduler-platform/database';
 
 export interface JobSearchParams {
   status?: JobStatus;

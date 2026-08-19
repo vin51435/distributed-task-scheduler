@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThanOrEqual, IsNull, Repository } from 'typeorm';
-import { JobEntity, JobStatus } from '@scheduler/database';
+import { JobEntity, JobStatus } from '@scheduler-platform/database';
 
 @Injectable()
 export class DispatcherRepository {

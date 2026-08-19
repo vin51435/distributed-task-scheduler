@@ -1,1 +1,1 @@
-export { ScheduleEntity, ScheduleType, ScheduleStatus } from '@scheduler/database';
+export { ScheduleEntity, ScheduleType, ScheduleStatus } from '@scheduler-platform/database';

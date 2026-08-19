@@ -2,7 +2,7 @@ import { Controller, Get, Post, Query, Param, HttpCode, HttpStatus } from '@nest
 import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentTenant } from '@scheduler-platform/auth';
 import { AdminService } from './admin.service';
-import { JobStatus } from '@scheduler/database';
+import { JobStatus } from '@scheduler-platform/database';
 
 @ApiTags('admin')
 @ApiBearerAuth()

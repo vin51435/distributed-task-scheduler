@@ -8,7 +8,7 @@ import {
   UserEntity,
   UserRoleEntity,
   UserStatus,
-} from '@scheduler/database';
+} from '@scheduler-platform/database';
 import { CreateRoleDto, AssignRoleDto, CreateUserDto } from './dto/rbac.dto';
 import { PasswordService } from '@scheduler-platform/auth';
 

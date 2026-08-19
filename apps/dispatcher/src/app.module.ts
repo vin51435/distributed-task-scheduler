@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppConfigModule, appConfigSchema } from '@scheduler/config';
-import { AppLoggerModule } from '@scheduler/logger';
+import { AppConfigModule, appConfigSchema } from '@scheduler-platform/config';
+import { AppLoggerModule } from '@scheduler-platform/logger';
 import {
   DatabaseModule,
   ScheduleEntity,
   JobEntity,
   ExecutionEntity,
   JobAuditEntity,
-} from '@scheduler/database';
-import { RabbitMQModule } from '@scheduler/rabbitmq';
-import { RedisModule } from '@scheduler/redis';
+} from '@scheduler-platform/database';
+import { RabbitMQModule } from '@scheduler-platform/rabbitmq';
+import { RedisModule } from '@scheduler-platform/redis';
 import { MetricsModule } from '@scheduler-platform/metrics';
 import { DispatcherModule } from './dispatcher/dispatcher.module';
 import { HealthModule } from './health/health.module';

@@ -11,7 +11,7 @@ import {
   RefreshTokenEntity,
   ApiKeyEntity,
   DatabaseModule,
-} from '@scheduler/database';
+} from '@scheduler-platform/database';
 import { AuthModule } from '@scheduler-platform/auth';
 import { TenantModule } from '@scheduler-platform/tenant';
 import { RateLimiterModule } from '@scheduler-platform/rate-limiter';

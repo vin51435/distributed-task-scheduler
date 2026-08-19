@@ -16,8 +16,8 @@ import {
   ScheduleType,
   ScheduleStatus,
   TenantLimitsEntity,
-} from '@scheduler/database';
-import { calculateBucket } from '@scheduler/redis';
+} from '@scheduler-platform/database';
+import { calculateBucket } from '@scheduler-platform/redis';
 import { MetricsService } from '@scheduler-platform/metrics';
 
 @Injectable()

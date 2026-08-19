@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScheduleEntity, TenantLimitsEntity } from '@scheduler/database';
+import { ScheduleEntity, TenantLimitsEntity } from '@scheduler-platform/database';
 import { ScheduleRepository } from './schedule.repository';
 import { ScheduleService } from './schedule.service';
 import { ScheduleController } from './schedule.controller';

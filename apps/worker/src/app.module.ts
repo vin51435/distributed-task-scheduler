@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppConfigModule, appConfigSchema } from '@scheduler/config';
-import { AppLoggerModule } from '@scheduler/logger';
+import { AppConfigModule, appConfigSchema } from '@scheduler-platform/config';
+import { AppLoggerModule } from '@scheduler-platform/logger';
 import {
   DatabaseModule,
   ScheduleEntity,
@@ -9,9 +9,9 @@ import {
   ExecutionEntity,
   JobAuditEntity,
   JobEffectEntity,
-} from '@scheduler/database';
-import { RabbitMQModule } from '@scheduler/rabbitmq';
-import { RedisModule } from '@scheduler/redis';
+} from '@scheduler-platform/database';
+import { RabbitMQModule } from '@scheduler-platform/rabbitmq';
+import { RedisModule } from '@scheduler-platform/redis';
 import { MetricsModule } from '@scheduler-platform/metrics';
 import { WorkerModule } from './worker/worker.module';
 import { HealthModule } from './health/health.module';

@@ -12,7 +12,7 @@ import {
   ScheduleEntity,
   JobAuditEntity,
   TenantLimitsEntity,
-} from '@scheduler/database';
+} from '@scheduler-platform/database';
 
 describe('Tenant Isolation Hardening Tests', () => {
   let adminService: AdminService;

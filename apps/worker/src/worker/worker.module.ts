@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ExecutionEntity, JobEntity, JobEffectEntity } from '@scheduler/database';
+import { ExecutionEntity, JobEntity, JobEffectEntity } from '@scheduler-platform/database';
 import { HandlersModule } from '@scheduler-platform/handlers';
 import { ExecutionRepository } from './execution.repository';
 import { ExecutionService } from './execution.service';

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { AppConfigModule, appConfigSchema } from '@scheduler/config';
-import { AppLoggerModule } from '@scheduler/logger';
+import { AppConfigModule, appConfigSchema } from '@scheduler-platform/config';
+import { AppLoggerModule } from '@scheduler-platform/logger';
 import {
   DatabaseModule,
   ScheduleEntity,
@@ -8,7 +8,7 @@ import {
   ExecutionEntity,
   JobAuditEntity,
   TenantLimitsEntity,
-} from '@scheduler/database';
+} from '@scheduler-platform/database';
 import { MetricsModule } from '@scheduler-platform/metrics';
 import { ScheduleModule } from './schedule/schedule.module';
 import { AdminModule } from './admin/admin.module';

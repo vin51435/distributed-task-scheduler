@@ -1,9 +1,9 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
-import { JobStatus } from '@scheduler/database';
-import { PublisherService, WORKER_QUEUE_CONFIGS } from '@scheduler/rabbitmq';
-import { LockService, IdempotencyService, HeartbeatService } from '@scheduler/redis';
+import { JobStatus } from '@scheduler-platform/database';
+import { PublisherService, WORKER_QUEUE_CONFIGS } from '@scheduler-platform/rabbitmq';
+import { LockService, IdempotencyService, HeartbeatService } from '@scheduler-platform/redis';
 import { MetricsService } from '@scheduler-platform/metrics';
 import { DispatcherRepository } from './dispatcher.repository';
 

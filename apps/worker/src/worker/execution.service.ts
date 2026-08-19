@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ExecutionEntity, ExecutionStatus, JobEntity, JobStatus } from '@scheduler/database';
+import {
+  ExecutionEntity,
+  ExecutionStatus,
+  JobEntity,
+  JobStatus,
+} from '@scheduler-platform/database';
 import { ExecutionRepository } from './execution.repository';
 
 export interface WorkerExecutionMetrics {

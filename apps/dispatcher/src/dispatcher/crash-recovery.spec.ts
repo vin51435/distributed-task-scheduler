@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DispatcherService } from './dispatcher.service';
 import { DispatcherRepository } from './dispatcher.repository';
-import { PublisherService } from '@scheduler/rabbitmq';
+import { PublisherService } from '@scheduler-platform/rabbitmq';
 import { ConfigService } from '@nestjs/config';
 
 describe('Dispatcher Crash Recovery & Resilience Tests', () => {

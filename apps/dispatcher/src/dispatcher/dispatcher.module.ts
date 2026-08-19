@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JobEntity } from '@scheduler/database';
+import { JobEntity } from '@scheduler-platform/database';
 import { DispatcherRepository } from './dispatcher.repository';
 import { DispatcherService } from './dispatcher.service';
 import { DispatcherController } from './dispatcher.controller';

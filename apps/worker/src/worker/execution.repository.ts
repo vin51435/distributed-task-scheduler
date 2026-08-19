@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ExecutionEntity, ExecutionStatus, JobEntity, JobStatus } from '@scheduler/database';
+import {
+  ExecutionEntity,
+  ExecutionStatus,
+  JobEntity,
+  JobStatus,
+} from '@scheduler-platform/database';
 
 @Injectable()
 export class ExecutionRepository {

@@ -19,7 +19,7 @@ import {
   UserStatus,
   TenantStatus,
   TenantPlan,
-} from '@scheduler/database';
+} from '@scheduler-platform/database';
 import { JwtService, PasswordService } from '@scheduler-platform/auth';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto, RefreshTokenDto, ChangePasswordDto } from './dto/login.dto';

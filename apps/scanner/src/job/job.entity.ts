@@ -1,1 +1,1 @@
-export { JobEntity, JobStatus } from '@scheduler/database';
+export { JobEntity, JobStatus } from '@scheduler-platform/database';

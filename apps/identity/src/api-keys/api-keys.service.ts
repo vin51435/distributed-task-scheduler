@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ApiKeyEntity } from '@scheduler/database';
+import { ApiKeyEntity } from '@scheduler-platform/database';
 import { ApiKeyService as AuthApiKeyService } from '@scheduler-platform/auth';
 import { CreateApiKeyDto, ValidateApiKeyDto } from './dto/api-key.dto';
 

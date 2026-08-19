@@ -10,7 +10,7 @@ import {
   UserRoleEntity,
   RolePermissionEntity,
   RefreshTokenEntity,
-} from '@scheduler/database';
+} from '@scheduler-platform/database';
 import { JwtService, PasswordService } from '@scheduler-platform/auth';
 
 describe('AuthService', () => {

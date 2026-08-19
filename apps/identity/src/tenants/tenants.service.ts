@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TenantEntity, TenantLimitsEntity } from '@scheduler/database';
+import { TenantEntity, TenantLimitsEntity } from '@scheduler-platform/database';
 import { UpdateTenantDto, UpdateTenantLimitsDto } from './dto/tenant.dto';
 
 @Injectable()

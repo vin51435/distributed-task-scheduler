@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { TenantPlan, TenantStatus } from '@scheduler/database';
+import { TenantPlan, TenantStatus } from '@scheduler-platform/database';
 
 export class UpdateTenantDto {
   @ApiProperty({ example: 'Acme Global Services', required: false })
