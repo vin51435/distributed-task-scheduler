@@ -16,7 +16,7 @@ jobs:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: scheduler_db
         ports:
           - 5432:5432
@@ -77,4 +77,25 @@ jobs:
         run: npm run build
 
       - name: Run Tests
+        env:
+          NODE_ENV: test
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: scheduler_db
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          RABBITMQ_HOST: localhost
+          RABBITMQ_PORT: 5672
+          RABBITMQ_USER: guest
+          RABBITMQ_PASSWORD: guest
+          RABBITMQ_URL: amqp://guest:guest@localhost:5672
+          JWT_SECRET: super_secret_jwt_test_key_minimum_32_characters
+          SCANNER_PORT: 3003
+          DISPATCHER_PORT: 3004
+          WORKER_PORT: 3005
+          SCHEDULER_PORT: 3002
+          IDENTITY_PORT: 3001
+          GATEWAY_PORT: 8080
         run: npm run test
