@@ -1,12 +1,21 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Optional } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { ConnectionService, PublisherService, WORKER_QUEUE_CONFIGS } from '@scheduler/rabbitmq';
-import { JobStatus, RetryPolicy } from '@scheduler/database';
-import { calculateNextRetryAt, isRetryableError } from '@scheduler/errors';
-import { IdempotencyService, HeartbeatService, RateLimiterService } from '@scheduler/redis';
+import {
+  ConnectionService,
+  PublisherService,
+  WORKER_QUEUE_CONFIGS,
+} from '@scheduler-platform/rabbitmq';
+import { JobStatus, RetryPolicy } from '@scheduler-platform/database';
+import { calculateNextRetryAt, isRetryableError } from '@scheduler-platform/errors';
+import {
+  IdempotencyService,
+  HeartbeatService,
+  RateLimiterService,
+} from '@scheduler-platform/redis';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
-import { HandlerRegistry } from './handler.registry';
+import { HandlerRegistry } from '@scheduler-platform/handlers';
 import { ExecutionService } from './execution.service';
+import { MetricsService } from '@scheduler-platform/metrics';
 
 export interface JobMessageEnvelope {
   jobId: string;
@@ -24,6 +33,10 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ConsumerService.name);
   private isShuttingDown = false;
   private readonly instanceId = `worker-${randomUUID()}`;
+  private readonly maxConcurrency = Number(
+    process.env.WORKER_CONCURRENCY || process.env.WORKER_PREFETCH || 50,
+  );
+  private currentInFlight = 0;
 
   constructor(
     private readonly connectionService: ConnectionService,
@@ -33,6 +46,7 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly idempotencyService?: IdempotencyService,
     @Optional() private readonly heartbeatService?: HeartbeatService,
     @Optional() private readonly rateLimiterService?: RateLimiterService,
+    @Optional() private readonly metricsService?: MetricsService,
   ) {}
 
   onModuleInit() {
@@ -68,6 +82,12 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
       channelWrapper.addSetup(async (channel: ConfirmChannel) => {
         const exchangeName = process.env.RABBITMQ_EXCHANGE || 'scheduler.exchange';
         const queueConfigs = WORKER_QUEUE_CONFIGS;
+
+        // Bounded Concurrency: Limit unacknowledged messages pushed by RabbitMQ broker
+        await channel.prefetch(this.maxConcurrency);
+        this.logger.log(
+          `Worker [${this.instanceId}] configured RabbitMQ channel prefetch: ${this.maxConcurrency}`,
+        );
 
         await channel.assertExchange(exchangeName, 'direct', { durable: true });
 
@@ -106,6 +126,28 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
+    if (this.currentInFlight >= this.maxConcurrency) {
+      this.logger.warn(
+        `Worker [${this.instanceId}] at max concurrency (${this.currentInFlight}/${this.maxConcurrency}). NACKing message to requeue.`,
+      );
+      channel.nack(msg, false, true);
+      return;
+    }
+
+    this.currentInFlight++;
+    try {
+      await this.handleMessageExecution(channel, msg, dlqName, exchangeName);
+    } finally {
+      this.currentInFlight = Math.max(0, this.currentInFlight - 1);
+    }
+  }
+
+  private async handleMessageExecution(
+    channel: ConfirmChannel,
+    msg: ConsumeMessage,
+    dlqName: string,
+    exchangeName: string,
+  ): Promise<void> {
     let envelope: JobMessageEnvelope;
     const contentStr = msg.content.toString();
 
@@ -226,17 +268,23 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
     const maxAttempts = existingJob.maxAttempts || 5;
     const retryPolicy = existingJob.retryPolicy || RetryPolicy.EXPONENTIAL_BACKOFF;
 
+    this.metricsService?.workerRunningJobs.inc();
+    const endDurationTimer = this.metricsService?.workerExecutionDuration.startTimer();
+
     // 7. Run Job Handler Execution
     try {
       const handler = this.handlerRegistry.getHandler(workerType);
       await handler.execute(envelope.payload || {}, envelope.jobId);
 
       await this.executionService.completeExecution(execution.id, envelope.jobId);
+      this.metricsService?.workerSuccessTotal.inc({ worker_type: workerType });
       channel.ack(msg);
     } catch (err: any) {
       const errorMessage = err.message || String(err);
       const stackTrace = err.stack;
       const retryable = isRetryableError(err);
+
+      this.metricsService?.workerFailureTotal.inc({ worker_type: workerType });
 
       this.logger.error(
         `Error executing handler for job ${envelope.jobId} (attempt ${currentAttempt}/${maxAttempts}, retryable: ${retryable}): ${errorMessage}`,
@@ -269,6 +317,7 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
           payload: envelope.payload,
         });
 
+        this.metricsService?.workerDlqTotal.inc();
         channel.ack(msg);
       } else {
         const nextRetryAt =
@@ -289,9 +338,12 @@ export class ConsumerService implements OnModuleInit, OnModuleDestroy {
           await this.idempotencyService.clear(`idempotency:worker:${envelope.jobId}`);
         }
 
+        this.metricsService?.workerRetryTotal.inc();
         channel.ack(msg);
       }
     } finally {
+      this.metricsService?.workerRunningJobs.dec();
+      endDurationTimer?.();
       if (heartbeatTimer) {
         clearInterval(heartbeatTimer);
       }

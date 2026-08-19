@@ -2,13 +2,14 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Optional } from '@ne
 import { ConfigService } from '@nestjs/config';
 import { CronExpressionParser } from 'cron-parser';
 import { randomUUID } from 'crypto';
-import { ScheduleStatus, ScheduleType, JobStatus } from '@scheduler/database';
+import { ScheduleStatus, ScheduleType, JobStatus } from '@scheduler-platform/database';
 import {
   LockService,
   LeaderElectionService,
   BucketService,
   HeartbeatService,
-} from '@scheduler/redis';
+} from '@scheduler-platform/redis';
+import { MetricsService } from '@scheduler-platform/metrics';
 import { ScannerRepository } from './scanner.repository';
 
 export enum ScannerMode {
@@ -60,6 +61,7 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly leaderService?: LeaderElectionService,
     @Optional() private readonly bucketService?: BucketService,
     @Optional() private readonly heartbeatService?: HeartbeatService,
+    @Optional() private readonly metricsService?: MetricsService,
   ) {
     this.instanceId =
       this.configService?.get<string>('SCANNER_INSTANCE_ID') || `scanner-${randomUUID()}`;
@@ -204,8 +206,8 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
           return { scannedSchedules: 0, jobsCreated: 0, claimedBuckets: [] };
         }
 
-        this.logger.log(
-          `[Bucket Lease] Instance ${this.instanceId} claimed ${targetBuckets.length} bucket(s) (active nodes: ${activeInstances}): [${targetBuckets.slice(0, 5).join(', ')}${targetBuckets.length > 5 ? '...' : ''}]`,
+        this.logger.debug(
+          `[Bucket Lease] Instance ${this.instanceId} claimed ${targetBuckets.length} bucket(s) (active nodes: ${activeInstances})`,
         );
       }
 
@@ -215,9 +217,16 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
         this.batchSize,
         targetBuckets,
       );
-      this.logger.log(
-        `Instance ${this.instanceId} found ${dueSchedules.length} due schedule(s) at ${now.toISOString()}`,
-      );
+
+      if (dueSchedules.length > 0) {
+        this.logger.log(
+          `Instance ${this.instanceId} found ${dueSchedules.length} due schedule(s) at ${now.toISOString()}`,
+        );
+      } else {
+        this.logger.debug(
+          `Instance ${this.instanceId} found 0 due schedules at ${now.toISOString()}`,
+        );
+      }
 
       for (const schedule of dueSchedules) {
         try {
@@ -266,6 +275,12 @@ export class ScannerService implements OnModuleInit, OnModuleDestroy {
       this.totalScans++;
       this.totalJobsCreated += jobsCreatedCount;
       this.lastScanTime = new Date();
+
+      if (jobsCreatedCount > 0) {
+        this.metricsService?.scannerJobsCreatedTotal.inc(jobsCreatedCount);
+      }
+      this.metricsService?.scannerScanDuration.set((Date.now() - now.getTime()) / 1000);
+      this.metricsService?.scannerBucketOwnership.set(this.claimedBuckets.length);
 
       return {
         scannedSchedules: dueSchedules.length,

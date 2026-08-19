@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JobEntity, ExecutionEntity, ScheduleEntity, JobAuditEntity } from '@scheduler/database';
+import {
+  JobEntity,
+  ExecutionEntity,
+  ScheduleEntity,
+  JobAuditEntity,
+} from '@scheduler-platform/database';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
 

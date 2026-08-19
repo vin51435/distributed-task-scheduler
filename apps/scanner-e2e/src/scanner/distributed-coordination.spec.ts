@@ -1,6 +1,6 @@
 import { ScannerService } from '../../../../apps/scanner/src/scanner/scanner.service';
 import { DispatcherService } from '../../../../apps/dispatcher/src/dispatcher/dispatcher.service';
-import { calculateBucket } from '@scheduler/redis';
+import { calculateBucket } from '@scheduler-platform/redis';
 
 describe('Distributed Coordination & Scaling (Phase 8 Integration)', () => {
   let mockLockService: any;

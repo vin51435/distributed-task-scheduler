@@ -16,6 +16,7 @@ export class RabbitMQModule {
 
     return {
       module: RabbitMQModule,
+      global: true,
       providers: [
         optionsProvider,
         ConnectionService,
@@ -39,6 +40,7 @@ export class RabbitMQModule {
 
     return {
       module: RabbitMQModule,
+      global: true,
       providers: [
         optionsProvider,
         ConnectionService,

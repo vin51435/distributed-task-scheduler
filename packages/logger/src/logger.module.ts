@@ -17,6 +17,34 @@ export class AppLoggerModule {
           pinoHttp: {
             name: options.serviceName,
             level: process.env.LOG_LEVEL || 'info',
+            autoLogging: {
+              ignore: (req) => {
+                const url = (req.url || '').toLowerCase();
+                return (
+                  url.includes('/metrics') ||
+                  url.includes('/health') ||
+                  url.includes('/favicon.ico') ||
+                  url.includes('/docs/swagger-ui') ||
+                  url.includes('.js') ||
+                  url.includes('.css')
+                );
+              },
+            },
+            serializers: {
+              req: (req) => ({
+                method: req.method,
+                url: req.url,
+              }),
+              res: (res) => ({
+                statusCode: res.statusCode,
+              }),
+            },
+            customSuccessMessage(req, res) {
+              return `[${req.method}] ${req.url} -> ${res.statusCode}`;
+            },
+            customErrorMessage(req, res, err) {
+              return `[${req.method}] ${req.url} -> ${res.statusCode} (Error: ${err.message})`;
+            },
             mixin() {
               const store = requestContext.getStore();
               return {
@@ -39,6 +67,8 @@ export class AppLoggerModule {
                   options: {
                     colorize: true,
                     singleLine: true,
+                    ignore: 'pid,hostname,req,res,responseTime,trace_id,span_id,trace_flags',
+                    translateTime: 'HH:MM:ss',
                   },
                 },
           },

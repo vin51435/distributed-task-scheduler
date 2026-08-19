@@ -5,7 +5,7 @@ import {
   ScheduleType,
   JobEntity,
   JobStatus,
-} from '@scheduler/database';
+} from '@scheduler-platform/database';
 import { ScannerService } from './scanner.service';
 import { ScannerRepository } from './scanner.repository';
 

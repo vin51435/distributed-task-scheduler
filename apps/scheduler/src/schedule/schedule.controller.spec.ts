@@ -59,7 +59,7 @@ describe('ScheduleController', () => {
       };
 
       const result = await controller.create(dto);
-      expect(service.createSchedule).toHaveBeenCalledWith(dto);
+      expect(service.createSchedule).toHaveBeenCalledWith(dto, undefined);
       expect(result.id).toEqual(mockSchedule.id);
       expect(result.name).toEqual(mockSchedule.name);
     });

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScheduleEntity, JobEntity } from '@scheduler/database';
+import { ScheduleEntity, JobEntity } from '@scheduler-platform/database';
 import { ScannerController } from './scanner.controller';
 import { ScannerService } from './scanner.service';
 import { ScannerRepository } from './scanner.repository';

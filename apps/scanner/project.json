@@ -16,18 +16,24 @@
         "main": "apps/scanner/src/main.ts",
         "tsConfig": "apps/scanner/tsconfig.app.json",
         "webpackConfig": "apps/scanner/webpack.config.js",
+        "sourceMap": true,
         "assets": ["apps/scanner/src/assets"]
       },
       "configurations": {
-        "development": {},
-        "production": {}
+        "development": {
+          "sourceMap": true
+        },
+        "production": {
+          "sourceMap": true
+        }
       }
     },
     "serve": {
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "scanner:build"
+        "buildTarget": "scanner:build",
+        "port": 9232
       },
       "configurations": {
         "development": {

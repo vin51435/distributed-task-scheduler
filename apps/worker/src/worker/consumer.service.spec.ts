@@ -1,13 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConnectionService, PublisherService } from '@scheduler/rabbitmq';
-import { JobStatus, RetryPolicy } from '@scheduler/database';
+import { ConnectionService, PublisherService } from '@scheduler-platform/rabbitmq';
+import { JobStatus, RetryPolicy } from '@scheduler-platform/database';
 import { ConsumerService } from './consumer.service';
 import { HandlerRegistry } from './handler.registry';
 import { ExecutionService } from './execution.service';
 
 describe('ConsumerService', () => {
   let service: ConsumerService;
-  let connectionService: jest.Mocked<ConnectionService>;
   let publisherService: jest.Mocked<PublisherService>;
   let handlerRegistry: jest.Mocked<HandlerRegistry>;
   let executionService: jest.Mocked<ExecutionService>;
@@ -50,7 +49,6 @@ describe('ConsumerService', () => {
     }).compile();
 
     service = module.get<ConsumerService>(ConsumerService);
-    connectionService = module.get(ConnectionService);
     publisherService = module.get(PublisherService);
     handlerRegistry = module.get(HandlerRegistry);
     executionService = module.get(ExecutionService);
@@ -88,7 +86,7 @@ describe('ConsumerService', () => {
 
       expect(executionService.startExecution).toHaveBeenCalledWith('job-100');
       expect(handlerRegistry.getHandler).toHaveBeenCalledWith('EMAIL');
-      expect(mockHandler.execute).toHaveBeenCalledWith(envelope.payload);
+      expect(mockHandler.execute).toHaveBeenCalledWith(envelope.payload, 'job-100');
       expect(executionService.completeExecution).toHaveBeenCalledWith('exec-1', 'job-100');
       expect(mockChannel.ack).toHaveBeenCalledWith(msg);
     });

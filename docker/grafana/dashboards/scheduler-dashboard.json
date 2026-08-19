@@ -12,9 +12,7 @@
       "id": 1,
       "title": "Schedules Created Total",
       "type": "stat",
-      "targets": [
-        { "expr": "sum(scheduler_requests_total{status='success'})", "legendFormat": "Created" }
-      ]
+      "targets": [{ "expr": "sum(scheduler_requests_total)", "legendFormat": "Created" }]
     },
     {
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },

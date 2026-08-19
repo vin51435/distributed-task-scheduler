@@ -4,3 +4,4 @@ export * from './result.type';
 export * from './validation.error';
 export * from './retry-policy.calculator';
 export * from './failure-classifier';
+export * from './global-exception.filter';

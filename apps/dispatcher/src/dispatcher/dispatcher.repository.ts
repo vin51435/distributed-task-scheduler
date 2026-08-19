@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThanOrEqual, IsNull, Repository } from 'typeorm';
-import { JobEntity, JobStatus } from '@scheduler/database';
+import { JobEntity, JobStatus } from '@scheduler-platform/database';
 
 @Injectable()
 export class DispatcherRepository {
@@ -42,8 +42,25 @@ export class DispatcherRepository {
         limit,
       ]);
 
-      if (Array.isArray(rawResults) && rawResults.length > 0) {
-        return rawResults.map((r: any) => this.mapRawToJobEntity(r));
+      // Handle Postgres [rows, count] format or direct array of rows
+      let rows: any[] = [];
+      if (Array.isArray(rawResults)) {
+        if (Array.isArray(rawResults[0])) {
+          rows = rawResults[0];
+        } else if (
+          rawResults.length > 0 &&
+          typeof rawResults[0] === 'object' &&
+          rawResults[0] !== null &&
+          !Array.isArray(rawResults[0])
+        ) {
+          rows = rawResults;
+        }
+      }
+
+      if (rows.length > 0) {
+        return rows
+          .filter((r) => r && typeof r === 'object')
+          .map((r: any) => this.mapRawToJobEntity(r));
       }
       return [];
     } catch (err: any) {
@@ -136,7 +153,9 @@ export class DispatcherRepository {
   }
 
   private mapRawToJobEntity(r: any): JobEntity {
+    if (!r) return new JobEntity();
     const row = Array.isArray(r) ? r[0] : r;
+    if (!row || typeof row !== 'object') return new JobEntity();
     const entity = new JobEntity();
     entity.id = row.id || row.Id || row.ID;
     entity.createdAt =

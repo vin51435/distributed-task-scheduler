@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ExecutionEntity, ExecutionStatus, JobStatus } from '@scheduler/database';
+import { ExecutionEntity, ExecutionStatus, JobStatus } from '@scheduler-platform/database';
 import { ExecutionService } from './execution.service';
 import { ExecutionRepository } from './execution.repository';
 

@@ -1,9 +1,10 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
-import { JobStatus } from '@scheduler/database';
-import { PublisherService, WORKER_QUEUE_CONFIGS } from '@scheduler/rabbitmq';
-import { LockService, IdempotencyService, HeartbeatService } from '@scheduler/redis';
+import { JobStatus } from '@scheduler-platform/database';
+import { PublisherService, WORKER_QUEUE_CONFIGS } from '@scheduler-platform/rabbitmq';
+import { LockService, IdempotencyService, HeartbeatService } from '@scheduler-platform/redis';
+import { MetricsService } from '@scheduler-platform/metrics';
 import { DispatcherRepository } from './dispatcher.repository';
 
 export interface DispatchResult {
@@ -44,6 +45,7 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
     @Optional() private readonly lockService?: LockService,
     @Optional() private readonly idempotencyService?: IdempotencyService,
     @Optional() private readonly heartbeatService?: HeartbeatService,
+    @Optional() private readonly metricsService?: MetricsService,
   ) {
     this.instanceId =
       this.configService?.get<string>('DISPATCHER_INSTANCE_ID') || `dispatcher-${randomUUID()}`;
@@ -229,6 +231,11 @@ export class DispatcherService implements OnModuleInit, OnModuleDestroy {
       this.totalFailed += failedCount;
       if (readyJobs.length > 0) {
         this.lastDispatchTime = new Date();
+        this.metricsService?.dispatcherBatchSize.set(readyJobs.length);
+        this.metricsService?.dispatcherPublishTotal.inc(dispatchedCount);
+        if (failedCount > 0) {
+          this.metricsService?.dispatcherPublishFailuresTotal.inc(failedCount);
+        }
       }
 
       return {

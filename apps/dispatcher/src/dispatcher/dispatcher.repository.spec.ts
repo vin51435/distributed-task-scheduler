@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { JobEntity, JobStatus } from '@scheduler/database';
+import { JobEntity, JobStatus } from '@scheduler-platform/database';
 import { DispatcherRepository } from './dispatcher.repository';
 
 describe('DispatcherRepository', () => {

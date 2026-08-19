@@ -8,12 +8,14 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
+import { GlobalExceptionFilter } from '@scheduler-platform/errors';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.useLogger(app.get(Logger));
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -43,7 +45,7 @@ async function bootstrap() {
     },
   });
 
-  const port = process.env.DISPATCHER_PORT || 3002;
+  const port = process.env.DISPATCHER_PORT || 3004;
   await app.listen(port);
 
   const logger = app.get(Logger);

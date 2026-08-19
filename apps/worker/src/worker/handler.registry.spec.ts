@@ -1,7 +1,9 @@
-import { HandlerRegistry } from './handler.registry';
-import { EmailHandler } from './handlers/email.handler';
-import { WebhookHandler } from './handlers/webhook.handler';
-import { NoopHandler } from './handlers/noop.handler';
+import {
+  HandlerRegistry,
+  EmailHandler,
+  WebhookHandler,
+  NoopHandler,
+} from '@scheduler-platform/handlers';
 
 describe('HandlerRegistry', () => {
   let registry: HandlerRegistry;
@@ -30,10 +32,8 @@ describe('HandlerRegistry', () => {
     expect(registry.getHandler('NOOP')).toBe(noopHandler);
   });
 
-  it('should throw error for unknown worker type', () => {
-    expect(() => registry.getHandler('UNKNOWN')).toThrow(
-      "No handler registered for worker type 'UNKNOWN'",
-    );
+  it('should fallback to NoopHandler on unregistered worker type', () => {
+    expect(registry.getHandler('UNKNOWN')).toBe(noopHandler);
   });
 
   it('should throw error if type is empty', () => {

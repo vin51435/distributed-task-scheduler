@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
-import { AppConfigModule, appConfigSchema } from '@scheduler/config';
-import { AppLoggerModule } from '@scheduler/logger';
+import { AppConfigModule, appConfigSchema } from '@scheduler-platform/config';
+import { AppLoggerModule } from '@scheduler-platform/logger';
 import {
   DatabaseModule,
   ScheduleEntity,
   JobEntity,
   ExecutionEntity,
   JobAuditEntity,
-} from '@scheduler/database';
-import { RedisModule } from '@scheduler/redis';
+} from '@scheduler-platform/database';
+import { RedisModule } from '@scheduler-platform/redis';
 import { MetricsModule } from '@scheduler-platform/metrics';
 import { ScannerModule } from './scanner/scanner.module';
 

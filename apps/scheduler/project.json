@@ -16,18 +16,24 @@
         "main": "apps/scheduler/src/main.ts",
         "tsConfig": "apps/scheduler/tsconfig.app.json",
         "webpackConfig": "apps/scheduler/webpack.config.js",
+        "sourceMap": true,
         "assets": ["apps/scheduler/src/assets"]
       },
       "configurations": {
-        "development": {},
-        "production": {}
+        "development": {
+          "sourceMap": true
+        },
+        "production": {
+          "sourceMap": true
+        }
       }
     },
     "serve": {
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "scheduler:build"
+        "buildTarget": "scheduler:build",
+        "port": 9231
       },
       "configurations": {
         "development": {

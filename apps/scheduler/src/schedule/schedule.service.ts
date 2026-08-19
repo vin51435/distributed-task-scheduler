@@ -1,53 +1,83 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Optional,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CronExpressionParser } from 'cron-parser';
 import { ScheduleRepository } from './schedule.repository';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
-import { ScheduleEntity, ScheduleType, ScheduleStatus } from './entities/schedule.entity';
-import { calculateBucket } from '@scheduler/redis';
+import {
+  ScheduleEntity,
+  ScheduleType,
+  ScheduleStatus,
+  TenantLimitsEntity,
+} from '@scheduler-platform/database';
+import { calculateBucket } from '@scheduler-platform/redis';
+import { MetricsService } from '@scheduler-platform/metrics';
 
 @Injectable()
 export class ScheduleService {
-  constructor(private readonly scheduleRepository: ScheduleRepository) {}
+  constructor(
+    private readonly scheduleRepository: ScheduleRepository,
+    @Optional()
+    @InjectRepository(TenantLimitsEntity)
+    private readonly limitsRepo?: Repository<TenantLimitsEntity>,
+    @Optional()
+    private readonly metricsService?: MetricsService,
+  ) {}
 
-  async createSchedule(dto: CreateScheduleDto): Promise<ScheduleEntity> {
-    this.validateScheduleTypeRules(dto.type, dto.cron, dto.executeAt);
-
-    let nextExecuteAt: Date | undefined;
-    const timezone = dto.timezone ?? 'UTC';
-
-    if (dto.type === ScheduleType.ONE_OFF && dto.executeAt) {
-      nextExecuteAt = new Date(dto.executeAt);
-    } else if (dto.type === ScheduleType.CRON && dto.cron) {
-      try {
-        const interval = CronExpressionParser.parse(dto.cron, { tz: timezone });
-        nextExecuteAt = interval.next().toDate();
-      } catch (err: any) {
-        throw new BadRequestException(`Invalid cron expression "${dto.cron}": ${err.message}`);
-      }
+  async createSchedule(dto: CreateScheduleDto, tenantId?: string): Promise<ScheduleEntity> {
+    const startTime = Date.now();
+    const effectiveTenantId = dto.tenantId || tenantId;
+    if (effectiveTenantId && this.limitsRepo) {
+      await this.enforceScheduleQuota(effectiveTenantId, 1);
     }
 
-    return this.scheduleRepository.create({
-      name: dto.name,
-      description: dto.description,
-      type: dto.type,
-      cron: dto.cron,
-      nextExecuteAt,
-      timezone,
-      payload: dto.payload,
-      status: dto.status ?? ScheduleStatus.ACTIVE,
-      workerType: dto.workerType,
-      routingKey: dto.routingKey,
-      priority: dto.priority,
-      tenantId: dto.tenantId,
-      maxAttempts: dto.maxAttempts,
-      retryPolicy: dto.retryPolicy,
-      bucket: calculateBucket(dto.name),
-    });
+    const entityData = this.prepareScheduleEntity(dto, effectiveTenantId);
+    const created = await this.scheduleRepository.create(entityData);
+    this.metricsService?.schedulerRequestsTotal.inc({ method: 'POST', status: '201' });
+    this.metricsService?.schedulerCreationLatency.observe(Date.now() - startTime);
+    return created;
   }
 
-  async getSchedules(): Promise<ScheduleEntity[]> {
-    return this.scheduleRepository.findAll();
+  async createBatchSchedules(
+    dtos: CreateScheduleDto[],
+    tenantId?: string,
+  ): Promise<{ created: number; schedules: ScheduleEntity[] }> {
+    const startTime = Date.now();
+    if (!dtos || dtos.length === 0) {
+      throw new BadRequestException('Schedule batch must contain at least 1 item');
+    }
+    if (dtos.length > 1000) {
+      throw new BadRequestException('Batch size cannot exceed 1000 schedules per request');
+    }
+
+    const effectiveTenantId = tenantId || dtos[0]?.tenantId;
+    if (effectiveTenantId && this.limitsRepo) {
+      await this.enforceScheduleQuota(effectiveTenantId, dtos.length);
+    }
+
+    const entitiesData = dtos.map((dto) => this.prepareScheduleEntity(dto, effectiveTenantId));
+    const saved = await this.scheduleRepository.createMany(entitiesData);
+    this.metricsService?.schedulerRequestsTotal.inc(
+      { method: 'POST', status: '201' },
+      saved.length,
+    );
+    this.metricsService?.schedulerCreationLatency.observe(Date.now() - startTime);
+
+    return {
+      created: saved.length,
+      schedules: saved,
+    };
+  }
+
+  async getSchedules(tenantId?: string): Promise<ScheduleEntity[]> {
+    return this.scheduleRepository.findAll(tenantId);
   }
 
   async getScheduleById(id: string): Promise<ScheduleEntity> {
@@ -56,6 +86,42 @@ export class ScheduleService {
       throw new NotFoundException(`Schedule with ID "${id}" not found`);
     }
     return schedule;
+  }
+
+  async pauseSchedule(id: string): Promise<ScheduleEntity> {
+    const updated = await this.scheduleRepository.update(id, {
+      status: ScheduleStatus.PAUSED,
+    });
+    if (!updated) {
+      throw new NotFoundException(`Schedule with ID "${id}" not found`);
+    }
+    return updated;
+  }
+
+  async resumeSchedule(id: string): Promise<ScheduleEntity> {
+    const existing = await this.getScheduleById(id);
+    let nextExecuteAt = existing.nextExecuteAt;
+
+    if (existing.type === ScheduleType.CRON && existing.cron) {
+      try {
+        const interval = CronExpressionParser.parse(existing.cron, {
+          tz: existing.timezone || 'UTC',
+        });
+        nextExecuteAt = interval.next().toDate();
+      } catch (err: any) {
+        throw new BadRequestException(`Invalid cron expression "${existing.cron}": ${err.message}`);
+      }
+    }
+
+    const updated = await this.scheduleRepository.update(id, {
+      status: ScheduleStatus.ACTIVE,
+      nextExecuteAt,
+    });
+
+    if (!updated) {
+      throw new NotFoundException(`Schedule with ID "${id}" not found`);
+    }
+    return updated;
   }
 
   async updateSchedule(id: string, dto: UpdateScheduleDto): Promise<ScheduleEntity> {
@@ -101,6 +167,58 @@ export class ScheduleService {
     const deleted = await this.scheduleRepository.delete(id);
     if (!deleted) {
       throw new NotFoundException(`Schedule with ID "${id}" not found`);
+    }
+  }
+
+  private prepareScheduleEntity(
+    dto: CreateScheduleDto,
+    tenantId?: string,
+  ): Partial<ScheduleEntity> {
+    this.validateScheduleTypeRules(dto.type, dto.cron, dto.executeAt);
+
+    let nextExecuteAt: Date | undefined;
+    const timezone = dto.timezone ?? 'UTC';
+
+    if (dto.type === ScheduleType.ONE_OFF && dto.executeAt) {
+      nextExecuteAt = new Date(dto.executeAt);
+    } else if (dto.type === ScheduleType.CRON && dto.cron) {
+      try {
+        const interval = CronExpressionParser.parse(dto.cron, { tz: timezone });
+        nextExecuteAt = interval.next().toDate();
+      } catch (err: any) {
+        throw new BadRequestException(`Invalid cron expression "${dto.cron}": ${err.message}`);
+      }
+    }
+
+    return {
+      name: dto.name,
+      description: dto.description,
+      type: dto.type,
+      cron: dto.cron,
+      nextExecuteAt,
+      timezone,
+      payload: dto.payload,
+      status: dto.status ?? ScheduleStatus.ACTIVE,
+      workerType: dto.workerType,
+      routingKey: dto.routingKey,
+      priority: dto.priority ?? 50,
+      tenantId: dto.tenantId || tenantId,
+      maxAttempts: dto.maxAttempts,
+      retryPolicy: dto.retryPolicy,
+      bucket: calculateBucket(dto.name),
+    };
+  }
+
+  private async enforceScheduleQuota(tenantId: string, additionalCount: number) {
+    if (!this.limitsRepo) return;
+    const limits = await this.limitsRepo.findOne({ where: { tenantId } });
+    if (!limits) return;
+
+    const currentCount = await this.scheduleRepository.countByTenant(tenantId);
+    if (currentCount + additionalCount > limits.maxSchedules) {
+      throw new ForbiddenException(
+        `Tenant quota exceeded: current schedules (${currentCount}) + requested (${additionalCount}) > max allowed (${limits.maxSchedules})`,
+      );
     }
   }
 

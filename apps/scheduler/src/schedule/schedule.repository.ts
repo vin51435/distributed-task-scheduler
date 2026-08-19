@@ -15,12 +15,22 @@ export class ScheduleRepository {
     return await this.repo.save(entity);
   }
 
+  async createMany(data: Partial<ScheduleEntity>[]): Promise<ScheduleEntity[]> {
+    const entities = this.repo.create(data);
+    return await this.repo.save(entities);
+  }
+
+  async countByTenant(tenantId: string): Promise<number> {
+    return await this.repo.count({ where: { tenantId } });
+  }
+
   async findById(id: string): Promise<ScheduleEntity | null> {
     return await this.repo.findOne({ where: { id } });
   }
 
-  async findAll(): Promise<ScheduleEntity[]> {
+  async findAll(tenantId?: string): Promise<ScheduleEntity[]> {
     return await this.repo.find({
+      where: tenantId ? { tenantId } : {},
       order: { createdAt: 'DESC' },
     });
   }

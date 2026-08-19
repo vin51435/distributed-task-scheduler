@@ -53,7 +53,7 @@ describe('BucketService', () => {
 
   it('should claim multiple buckets dynamically', async () => {
     mockRedisClient.eval.mockResolvedValue(0); // renewal fails
-    mockRedisClient.set.mockImplementation((key: string, inst: string) => {
+    mockRedisClient.set.mockImplementation((key: string, _inst: string) => {
       // Allow acquiring odd numbered buckets
       const b = parseInt(key.split(':')[2], 10);
       return Promise.resolve(b % 2 === 1 ? 'OK' : null);

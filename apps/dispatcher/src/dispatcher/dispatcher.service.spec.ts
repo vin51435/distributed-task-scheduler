@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { JobEntity, JobStatus } from '@scheduler/database';
-import { PublisherService } from '@scheduler/rabbitmq';
+import { JobEntity, JobStatus } from '@scheduler-platform/database';
+import { PublisherService } from '@scheduler-platform/rabbitmq';
 import { DispatcherService } from './dispatcher.service';
 import { DispatcherRepository } from './dispatcher.repository';
 

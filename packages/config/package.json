@@ -1,8 +1,8 @@
 {
   "name": "@scheduler-platform/config",
   "version": "0.1.0",
-  "main": "../../dist/packages/config/index.js",
-  "types": "../../dist/packages/config/index.d.ts",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "private": true,
   "scripts": {
     "build": "tsc --build",

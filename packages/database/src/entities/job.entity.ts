@@ -1,14 +1,5 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from '../base.entity';
-
-export enum JobStatus {
-  READY = 'READY',
-  DISPATCHED = 'DISPATCHED',
-  RUNNING = 'RUNNING',
-  SUCCEEDED = 'SUCCEEDED',
-  FAILED = 'FAILED',
-  DEAD = 'DEAD',
-}
 
 export enum RetryPolicy {
   NONE = 'NONE',
@@ -18,7 +9,20 @@ export enum RetryPolicy {
   JITTER = 'JITTER',
 }
 
+export enum JobStatus {
+  READY = 'READY',
+  DISPATCHED = 'DISPATCHED',
+  RUNNING = 'RUNNING',
+  SUCCEEDED = 'SUCCEEDED',
+  FAILED = 'FAILED',
+  DEAD = 'DEAD',
+  CANCELLED = 'CANCELLED',
+}
+
 @Entity({ name: 'jobs' })
+@Index('idx_jobs_dispatch', ['priority', 'executeAt'], { where: "status = 'READY'" })
+@Index('idx_jobs_tenant_status', ['tenantId', 'status', 'createdAt'])
+@Index('idx_jobs_schedule', ['scheduleId', 'status'])
 export class JobEntity extends BaseEntity {
   @Column({ type: 'uuid', name: 'schedule_id' })
   scheduleId!: string;

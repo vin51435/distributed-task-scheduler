@@ -13,7 +13,7 @@
     "docker:up": "docker compose -f docker/compose/dev.yml up -d",
     "docker:down": "docker compose -f docker/compose/dev.yml down",
     "docker:logs": "docker compose -f docker/compose/dev.yml logs -f",
-    "dev": "nx run-many -t serve --all --parallel=10"
+    "dev": "nx run-many -t serve --all --parallel=10 --output-style=stream"
   },
   "workspaces": [
     "apps/*",
@@ -38,6 +38,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cron-parser": "^5.7.0",
+    "helmet": "^8.3.0",
     "ioredis": "^6.0.0",
     "nestjs-pino": "^4.3.0",
     "pg": "^8.13.0",

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { JobEntity } from '@scheduler/database';
+import { JobEntity } from '@scheduler-platform/database';
 
 @Injectable()
 export class JobRepository {

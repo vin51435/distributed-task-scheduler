@@ -46,7 +46,7 @@ async function bootstrap() {
     },
   });
 
-  const port = process.env.WORKER_PORT || 3003;
+  const port = process.env.WORKER_PORT || 3005;
   await app.listen(port);
 
   const logger = app.get(Logger);

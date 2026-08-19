@@ -5,9 +5,9 @@ describe('Worker Service Operational API (e2e)', () => {
     const res = await axios.get('/api/health');
     expect(res.status).toBe(200);
     expect(res.data).toHaveProperty('status');
-    expect(res.data).toHaveProperty('details');
-    expect(res.data.details).toHaveProperty('database');
-    expect(res.data.details).toHaveProperty('rabbitmq');
+    const checks = res.data.checks || res.data.details;
+    expect(checks).toHaveProperty('database');
+    expect(checks).toHaveProperty('rabbitmq');
   });
 
   it('GET /api/metrics - should return Prometheus worker operational metrics', async () => {

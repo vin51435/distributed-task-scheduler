@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThanOrEqual, In, Repository } from 'typeorm';
-import { ScheduleEntity, ScheduleStatus, JobEntity } from '@scheduler/database';
+import { ScheduleEntity, ScheduleStatus, JobEntity } from '@scheduler-platform/database';
 
 @Injectable()
 export class ScannerRepository {
