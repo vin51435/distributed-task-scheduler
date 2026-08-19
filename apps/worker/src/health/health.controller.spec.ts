@@ -1,11 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
-import { ConnectionService } from '@scheduler/rabbitmq';
+import { ConnectionService } from '@scheduler-platform/rabbitmq';
 import { HealthController } from './health.controller';
 
 describe('HealthController', () => {
   let controller: HealthController;
-  let dataSource: jest.Mocked<DataSource>;
   let rabbitConnection: jest.Mocked<ConnectionService>;
 
   beforeEach(async () => {
@@ -26,7 +25,6 @@ describe('HealthController', () => {
     }).compile();
 
     controller = module.get<HealthController>(HealthController);
-    dataSource = module.get(DataSource);
     rabbitConnection = module.get(ConnectionService);
   });
 

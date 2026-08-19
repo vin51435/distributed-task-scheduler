@@ -4,7 +4,6 @@ import { RedisService } from '../redis.service';
 
 describe('LockService', () => {
   let lockService: LockService;
-  let redisService: RedisService;
 
   const mockRedisClient = {
     set: jest.fn(),
@@ -27,7 +26,6 @@ describe('LockService', () => {
     }).compile();
 
     lockService = module.get<LockService>(LockService);
-    redisService = module.get<RedisService>(RedisService);
   });
 
   it('should acquire lock successfully when SET returns OK', async () => {

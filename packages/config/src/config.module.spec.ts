@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import { validateConfig, AppConfigModule } from './config.module';
 import { validateEnv, baseEnvSchema } from './env.schema';
 import { appConfigSchema } from './schemas/app.config';

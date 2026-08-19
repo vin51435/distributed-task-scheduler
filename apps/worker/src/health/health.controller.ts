@@ -1,7 +1,7 @@
 import { Controller, Get, Res, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
-import { ConnectionService } from '@scheduler/rabbitmq';
+import { ConnectionService } from '@scheduler-platform/rabbitmq';
 import type { Response } from 'express';
 
 @ApiTags('health')

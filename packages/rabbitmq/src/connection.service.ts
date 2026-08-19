@@ -42,7 +42,6 @@ export class ConnectionService implements OnModuleInit, OnModuleDestroy {
     });
 
     const exchangeName = this.options.exchangeName || 'scheduler.exchange';
-    const queueName = this.options.queueName || 'scheduler.jobs';
     this.confirmChannelWrapper = this.connectionManager.createChannel({
       json: true,
       setup: async (channel: ConfirmChannel) => {

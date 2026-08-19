@@ -10,19 +10,14 @@ import {
   JobStatus,
   ExecutionEntity,
   ScheduleEntity,
-  ScheduleStatus,
-  ScheduleType,
   JobAuditEntity,
   TenantLimitsEntity,
 } from '@scheduler/database';
 
 describe('Tenant Isolation Hardening Tests', () => {
   let adminService: AdminService;
-  let scheduleService: ScheduleService;
   let jobRepo: jest.Mocked<Repository<JobEntity>>;
   let scheduleRepo: jest.Mocked<Repository<ScheduleEntity>>;
-  let executionRepo: jest.Mocked<Repository<ExecutionEntity>>;
-  let auditRepo: jest.Mocked<Repository<JobAuditEntity>>;
 
   const TENANT_A = 'tenant-aaa-111';
   const TENANT_B = 'tenant-bbb-222';
@@ -78,11 +73,8 @@ describe('Tenant Isolation Hardening Tests', () => {
     }).compile();
 
     adminService = module.get<AdminService>(AdminService);
-    scheduleService = module.get<ScheduleService>(ScheduleService);
     jobRepo = module.get(getRepositoryToken(JobEntity));
     scheduleRepo = module.get(getRepositoryToken(ScheduleEntity));
-    executionRepo = module.get(getRepositoryToken(ExecutionEntity));
-    auditRepo = module.get(getRepositoryToken(JobAuditEntity));
   });
 
   describe('Admin Job Operations Isolation', () => {

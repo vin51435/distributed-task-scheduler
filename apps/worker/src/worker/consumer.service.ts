@@ -1,9 +1,17 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Optional } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { ConnectionService, PublisherService, WORKER_QUEUE_CONFIGS } from '@scheduler/rabbitmq';
-import { JobStatus, RetryPolicy } from '@scheduler/database';
-import { calculateNextRetryAt, isRetryableError } from '@scheduler/errors';
-import { IdempotencyService, HeartbeatService, RateLimiterService } from '@scheduler/redis';
+import {
+  ConnectionService,
+  PublisherService,
+  WORKER_QUEUE_CONFIGS,
+} from '@scheduler-platform/rabbitmq';
+import { JobStatus, RetryPolicy } from '@scheduler-platform/database';
+import { calculateNextRetryAt, isRetryableError } from '@scheduler-platform/errors';
+import {
+  IdempotencyService,
+  HeartbeatService,
+  RateLimiterService,
+} from '@scheduler-platform/redis';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
 import { HandlerRegistry } from '@scheduler-platform/handlers';
 import { ExecutionService } from './execution.service';

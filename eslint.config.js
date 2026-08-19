@@ -29,6 +29,12 @@ module.exports = [
     },
   },
   {
+    files: ['apps/*-e2e/**/*.ts', 'apps/*-e2e/**/*.js'],
+    rules: {
+      '@nx/enforce-module-boundaries': 'off',
+    },
+  },
+  {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parser: tsParser,
