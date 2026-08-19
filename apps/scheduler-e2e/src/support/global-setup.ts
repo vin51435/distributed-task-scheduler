@@ -10,7 +10,7 @@ module.exports = async function () {
     ? Number(process.env.SCHEDULER_PORT)
     : process.env.PORT
       ? Number(process.env.PORT)
-      : 3001;
+      : 3002;
 
   try {
     await waitForPortOpen(port, { host, retries: 2, retryDelay: 200 });
@@ -21,12 +21,12 @@ module.exports = async function () {
 
     const child: ChildProcess = spawn(process.execPath, [appPath], {
       env: { ...process.env, PORT: String(port), SCHEDULER_PORT: String(port) },
-      stdio: 'ignore',
+      stdio: 'inherit',
       detached: false,
     });
 
     (globalThis as any).__APP_CHILD_PROCESS__ = child;
-    await waitForPortOpen(port, { host, retries: 25, retryDelay: 400 });
+    await waitForPortOpen(port, { host, retries: 40, retryDelay: 500 });
     console.log(`[scheduler-e2e] Server started successfully on port ${port}`);
   }
 
