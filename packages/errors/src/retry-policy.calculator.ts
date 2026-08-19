@@ -1,4 +1,10 @@
-import { RetryPolicy } from '@scheduler-platform/database';
+export enum RetryPolicy {
+  NONE = 'NONE',
+  FIXED_DELAY = 'FIXED_DELAY',
+  LINEAR_BACKOFF = 'LINEAR_BACKOFF',
+  EXPONENTIAL_BACKOFF = 'EXPONENTIAL_BACKOFF',
+  JITTER = 'JITTER',
+}
 
 /**
  * Calculates the timestamp for the next retry attempt based on the specified retry policy.

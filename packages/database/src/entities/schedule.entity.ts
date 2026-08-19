@@ -2,6 +2,8 @@ import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 import { RetryPolicy } from './job.entity';
 
+export { RetryPolicy };
+
 export enum ScheduleType {
   CRON = 'CRON',
   ONE_OFF = 'ONE_OFF',

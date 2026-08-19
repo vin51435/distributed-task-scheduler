@@ -6,7 +6,7 @@ module.exports = async function () {
   console.log('\nSetting up dispatcher e2e tests...\n');
 
   const host = process.env.HOST ?? 'localhost';
-  const port = process.env.DISPATCHER_PORT ? Number(process.env.DISPATCHER_PORT) : 3003;
+  const port = process.env.DISPATCHER_PORT ? Number(process.env.DISPATCHER_PORT) : 3004;
 
   try {
     await waitForPortOpen(port, { host, retries: 2, retryDelay: 200 });
@@ -17,12 +17,12 @@ module.exports = async function () {
 
     const child: ChildProcess = spawn(process.execPath, [appPath], {
       env: { ...process.env, PORT: String(port), DISPATCHER_PORT: String(port) },
-      stdio: 'ignore',
+      stdio: 'inherit',
       detached: false,
     });
 
     (globalThis as any).__APP_CHILD_PROCESS__ = child;
-    await waitForPortOpen(port, { host, retries: 25, retryDelay: 400 });
+    await waitForPortOpen(port, { host, retries: 40, retryDelay: 500 });
     console.log(`[dispatcher-e2e] Server started successfully on port ${port}`);
   }
 

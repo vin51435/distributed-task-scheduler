@@ -1,6 +1,14 @@
 import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
+export enum RetryPolicy {
+  NONE = 'NONE',
+  FIXED_DELAY = 'FIXED_DELAY',
+  LINEAR_BACKOFF = 'LINEAR_BACKOFF',
+  EXPONENTIAL_BACKOFF = 'EXPONENTIAL_BACKOFF',
+  JITTER = 'JITTER',
+}
+
 export enum JobStatus {
   READY = 'READY',
   DISPATCHED = 'DISPATCHED',
@@ -9,14 +17,6 @@ export enum JobStatus {
   FAILED = 'FAILED',
   DEAD = 'DEAD',
   CANCELLED = 'CANCELLED',
-}
-
-export enum RetryPolicy {
-  NONE = 'NONE',
-  FIXED_DELAY = 'FIXED_DELAY',
-  LINEAR_BACKOFF = 'LINEAR_BACKOFF',
-  EXPONENTIAL_BACKOFF = 'EXPONENTIAL_BACKOFF',
-  JITTER = 'JITTER',
 }
 
 @Entity({ name: 'jobs' })

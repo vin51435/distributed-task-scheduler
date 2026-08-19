@@ -1,8 +1,8 @@
 {
   "name": "@scheduler-platform/rate-limiter",
   "version": "0.1.0",
-  "main": "../../dist/packages/rate-limiter/index.js",
-  "types": "../../dist/packages/rate-limiter/index.d.ts",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "private": true,
   "scripts": {
     "build": "tsc --build",

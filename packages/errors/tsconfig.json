@@ -2,13 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "../../dist/packages/errors",
-    "rootDir": "./src",
-    "composite": true,
-    "declaration": true,
-    "types": ["node", "jest"],
-    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
+    "declaration": true
   },
   "include": ["src/**/*"],
-  "exclude": ["src/**/*.spec.ts"],
-  "references": [{ "path": "../database" }]
+  "exclude": ["src/**/*.spec.ts"]
 }

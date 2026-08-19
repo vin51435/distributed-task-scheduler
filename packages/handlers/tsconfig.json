@@ -2,10 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "../../dist/packages/handlers",
-    "rootDir": "./src",
-    "composite": true,
-    "declaration": true,
-    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
+    "declaration": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.spec.ts"]
 }

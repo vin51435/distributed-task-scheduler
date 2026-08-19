@@ -1,8 +1,8 @@
 {
   "name": "@scheduler-platform/handlers",
   "version": "0.1.0",
-  "main": "../../dist/packages/handlers/index.js",
-  "types": "../../dist/packages/handlers/index.d.ts",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "private": true,
   "scripts": {
     "build": "tsc --build",

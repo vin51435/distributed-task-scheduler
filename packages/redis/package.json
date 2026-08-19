@@ -1,8 +1,8 @@
 {
   "name": "@scheduler-platform/redis",
   "version": "0.1.0",
-  "main": "../../dist/packages/redis/index.js",
-  "types": "../../dist/packages/redis/index.d.ts",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "private": true,
   "scripts": {
     "build": "tsc --build",

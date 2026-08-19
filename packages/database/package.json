@@ -1,8 +1,8 @@
 {
   "name": "@scheduler-platform/database",
   "version": "0.1.0",
-  "main": "../../dist/packages/database/index.js",
-  "types": "../../dist/packages/database/index.d.ts",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "private": true,
   "scripts": {
     "build": "tsc --build",
